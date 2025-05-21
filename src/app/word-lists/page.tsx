@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -45,6 +46,8 @@ const wordSchema = z.object({
 });
 
 type WordFormData = z.infer<typeof wordSchema>;
+
+const ALL_CATEGORIES_OPTION_VALUE = "__ALL_CATEGORIES__";
 
 export default function WordListsPage() {
   const { words, addWord, editWord, deleteWord, sourceLanguage, targetLanguage, categories, clearWords } = useGlobalAppContext();
@@ -167,12 +170,21 @@ export default function WordListsPage() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <Select
+                value={selectedCategory === '' ? ALL_CATEGORIES_OPTION_VALUE : selectedCategory}
+                onValueChange={(value) => {
+                  if (value === ALL_CATEGORIES_OPTION_VALUE) {
+                    setSelectedCategory('');
+                  } else {
+                    setSelectedCategory(value);
+                  }
+                }}
+              >
                 <SelectTrigger className="w-full sm:w-[200px]">
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
+                  <SelectItem value={ALL_CATEGORIES_OPTION_VALUE}>All Categories</SelectItem>
                   {categories.map(cat => (
                     <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                   ))}

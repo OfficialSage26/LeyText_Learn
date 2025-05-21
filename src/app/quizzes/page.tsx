@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -10,6 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import LanguageSelector from '@/components/LanguageSelector'; // Re-use for consistency
+
+const ALL_CATEGORIES_OPTION_VALUE = "__ALL_CATEGORIES__";
 
 export default function QuizzesPage() {
   const { words, categories, sourceLanguage, targetLanguage, addQuizScore } = useGlobalAppContext();
@@ -89,12 +92,21 @@ export default function QuizzesPage() {
               <label htmlFor="category-select" className="block text-sm font-medium mb-1">
                 Category (Optional)
               </label>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <Select
+                value={selectedCategory === '' ? ALL_CATEGORIES_OPTION_VALUE : selectedCategory}
+                onValueChange={(value) => {
+                  if (value === ALL_CATEGORIES_OPTION_VALUE) {
+                    setSelectedCategory('');
+                  } else {
+                    setSelectedCategory(value);
+                  }
+                }}
+              >
                 <SelectTrigger id="category-select" className="w-full sm:w-[300px]">
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
+                  <SelectItem value={ALL_CATEGORIES_OPTION_VALUE}>All Categories</SelectItem>
                   {categories.map(cat => (
                     <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                   ))}
