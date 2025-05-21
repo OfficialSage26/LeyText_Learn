@@ -1,15 +1,17 @@
+
 "use client";
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Layers, HelpCircle } from 'lucide-react';
+import { BookOpen, Layers, HelpCircle, Languages } from 'lucide-react'; // Added Languages icon
 
 const navItems = [
   { href: '/word-lists', label: 'Word Lists', icon: BookOpen },
   { href: '/flashcards', label: 'Flashcards', icon: Layers },
   { href: '/quizzes', label: 'Quizzes', icon: HelpCircle },
+  { href: '/translate', label: 'Translate', icon: Languages }, // Added Translate page
 ];
 
 type NavMenuProps = {
