@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { BookOpen, Layers, HelpCircle, Languages, GraduationCap } from 'lucide-react';
 
 const navItems = [
-  { href: '/learn', label: 'Learn', icon: GraduationCap },
+  { href: '/learn/select-language', label: 'Learn', icon: GraduationCap }, // Updated Link
   { href: '/word-lists', label: 'Word Lists', icon: BookOpen },
   { href: '/flashcards', label: 'Flashcards', icon: Layers },
   { href: '/quizzes', label: 'Quizzes', icon: HelpCircle },
@@ -22,13 +22,20 @@ type NavMenuProps = {
 export default function NavMenu({ isMobile = false }: NavMenuProps) {
   const pathname = usePathname();
 
+  const isActive = (href: string) => {
+    if (href === '/learn/select-language') {
+      return pathname === href || pathname.startsWith('/learn');
+    }
+    return pathname === href || (pathname.startsWith(href) && href !== '/');
+  };
+
   if (isMobile) {
     return (
       <nav className="flex flex-col space-y-2 px-4">
         {navItems.map((item) => (
           <Button
             key={item.href}
-            variant={pathname === item.href || (pathname.startsWith(item.href) && item.href !== '/') ? "secondary" : "ghost"}
+            variant={isActive(item.href) ? "secondary" : "ghost"}
             asChild
             className="justify-start"
           >
@@ -47,7 +54,7 @@ export default function NavMenu({ isMobile = false }: NavMenuProps) {
       {navItems.map((item) => (
         <Button
           key={item.href}
-          variant={pathname === item.href || (pathname.startsWith(item.href) && item.href !== '/') ? "secondary" : "ghost"}
+          variant={isActive(item.href) ? "secondary" : "ghost"}
           asChild
           size="sm"
         >

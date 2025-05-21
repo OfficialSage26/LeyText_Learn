@@ -14,7 +14,7 @@ const featureCards = [
     title: 'Embark on a Learning Journey',
     description: 'Access guided lessons, tutorials, and challenges like Duolingo.',
     icon: GraduationCap,
-    href: '/learn',
+    href: '/learn/select-language', // Updated Link
     color: 'text-indigo-500',
     dataAiHint: 'graduation cap book',
   },
@@ -106,7 +106,7 @@ export default function HomePage() {
               Explore the features or kickstart your structured learning journey to master your chosen languages!
             </p>
             <Button asChild size="lg">
-              <Link href="/learn">Let's Learn <GraduationCap className="ml-2 h-5 w-5" /></Link>
+              <Link href="/learn/select-language">Let's Learn <GraduationCap className="ml-2 h-5 w-5" /></Link>
             </Button>
           </div>
         </CardContent>
