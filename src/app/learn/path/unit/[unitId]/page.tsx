@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, use } from 'react'; // Import 'use'
 import AppLayout from '@/components/layout/AppLayout';
 import { useGlobalAppContext } from '@/hooks/useGlobalAppContext';
 import { generateExampleSentences } from '@/ai/flows/generate-example-sentences';
@@ -23,8 +23,12 @@ interface GreetingDisplay extends WordEntry {
   isLoadingExamples?: boolean;
 }
 
-export default function UnitPage({ params }: { params: { unitId: string } }) {
+export default function UnitPage({ params: paramsPromise }: { params: { unitId: string } }) {
+  // The 'params' prop is a Promise that resolves to an object like { unitId: string }
+  // We use React.use() to unwrap this Promise.
+  const params = use(paramsPromise as Promise<{ unitId: string }>);
   const { unitId } = params;
+
   const { targetLanguage, words: allWords } = useGlobalAppContext();
   const { toast } = useToast();
 
@@ -165,3 +169,4 @@ export default function UnitPage({ params }: { params: { unitId: string } }) {
     </AppLayout>
   );
 }
+
