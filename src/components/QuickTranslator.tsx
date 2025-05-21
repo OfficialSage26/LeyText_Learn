@@ -15,39 +15,50 @@ import { useToast } from "@/hooks/use-toast";
 import { useMounted } from '@/hooks/useMounted';
 
 export default function QuickTranslator() {
-  const { 
-    sourceLanguage, 
-    setSourceLanguage, 
-    targetLanguage, 
-    setTargetLanguage 
+  const {
+    sourceLanguage: globalSourceLanguage,
+    setSourceLanguage: setGlobalSourceLanguage,
+    targetLanguage: globalTargetLanguage,
+    setTargetLanguage: setGlobalTargetLanguage,
   } = useGlobalAppContext();
   const { toast } = useToast();
   const mounted = useMounted();
+
+  // Local state for UI display, initialized to server-consistent defaults
+  const [currentSourceLang, setCurrentSourceLang] = useState<Language>(SUPPORTED_LANGUAGES[0]);
+  const [currentTargetLang, setCurrentTargetLang] = useState<Language>(SUPPORTED_LANGUAGES[1]);
 
   const [inputText, setInputText] = useState('');
   const [outputText, setOutputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Sync local UI languages with global context after mount and on global changes
   useEffect(() => {
-    if (mounted && !isLoading) {
-      // Ensure source and target languages are different after loading from context/localStorage
-      if (sourceLanguage === targetLanguage) {
-        const newTarget = SUPPORTED_LANGUAGES.find(l => l !== sourceLanguage) ||
-                           SUPPORTED_LANGUAGES.find(l => l !== SUPPORTED_LANGUAGES[0]) || // Failsafe: pick first non-current
-                           SUPPORTED_LANGUAGES[1]; // Absolute failsafe
-        if (newTarget && newTarget !== targetLanguage) {
-          setTargetLanguage(newTarget);
+    if (mounted) {
+      setCurrentSourceLang(globalSourceLanguage);
+      setCurrentTargetLang(globalTargetLanguage);
+    }
+  }, [mounted, globalSourceLanguage, globalTargetLanguage]);
+
+  // Effect to ensure global source and target languages are different
+  useEffect(() => {
+    if (mounted) {
+      if (globalSourceLanguage === globalTargetLanguage) {
+        const newTarget = SUPPORTED_LANGUAGES.find(l => l !== globalSourceLanguage) ||
+                           (globalSourceLanguage === SUPPORTED_LANGUAGES[0] ? SUPPORTED_LANGUAGES[1] : SUPPORTED_LANGUAGES[0]) || // Ensure it's different
+                           SUPPORTED_LANGUAGES[1]; // Absolute fallback
+        if (newTarget && newTarget !== globalTargetLanguage) {
+          setGlobalTargetLanguage(newTarget);
         }
       }
     }
-  }, [mounted, sourceLanguage, targetLanguage, setTargetLanguage, isLoading]);
+  }, [mounted, globalSourceLanguage, globalTargetLanguage, setGlobalTargetLanguage]);
 
 
   const handleSwapLanguages = () => {
-    const tempLang = sourceLanguage;
-    setSourceLanguage(targetLanguage);
-    setTargetLanguage(tempLang);
+    setGlobalSourceLanguage(globalTargetLanguage); // Update global context
+    setGlobalTargetLanguage(globalSourceLanguage); // Update global context
 
     if (outputText.trim() !== '') {
         setInputText(outputText);
@@ -60,7 +71,8 @@ export default function QuickTranslator() {
       setOutputText('');
       return;
     }
-    if (sourceLanguage === targetLanguage) {
+    // Use global languages for the actual translation logic
+    if (globalSourceLanguage === globalTargetLanguage) {
       setOutputText(inputText);
       return;
     }
@@ -70,8 +82,8 @@ export default function QuickTranslator() {
     try {
       const result = await translateText({
         text: inputText,
-        sourceLanguage: sourceLanguage,
-        targetLanguage: targetLanguage,
+        sourceLanguage: globalSourceLanguage, // Use global context for API
+        targetLanguage: globalTargetLanguage, // Use global context for API
       });
       setOutputText(result.translatedText);
     } catch (e) {
@@ -102,9 +114,9 @@ export default function QuickTranslator() {
         <div className="flex flex-col sm:flex-row items-center gap-4">
           <div className="flex-1 w-full">
             <Label htmlFor="quick-source-language" className="mb-1 block text-sm font-medium">From</Label>
-            <Select 
-              value={sourceLanguage} 
-              onValueChange={(value) => { if (mounted) setSourceLanguage(value as Language)}}
+            <Select
+              value={currentSourceLang} // Use local state for display
+              onValueChange={(value) => { if (mounted) setGlobalSourceLanguage(value as Language)}} // Update global context
               disabled={!mounted}
             >
               <SelectTrigger id="quick-source-language" className="w-full">
@@ -112,7 +124,7 @@ export default function QuickTranslator() {
               </SelectTrigger>
               <SelectContent>
                 {SUPPORTED_LANGUAGES.map(lang => (
-                  <SelectItem key={`quick-source-${lang}`} value={lang} disabled={lang === targetLanguage}>
+                  <SelectItem key={`quick-source-${lang}`} value={lang} disabled={lang === currentTargetLang}>
                     {lang}
                   </SelectItem>
                 ))}
@@ -128,9 +140,9 @@ export default function QuickTranslator() {
 
           <div className="flex-1 w-full">
             <Label htmlFor="quick-target-language" className="mb-1 block text-sm font-medium">To</Label>
-            <Select 
-              value={targetLanguage} 
-              onValueChange={(value) => { if (mounted) setTargetLanguage(value as Language)}}
+            <Select
+              value={currentTargetLang} // Use local state for display
+              onValueChange={(value) => { if (mounted) setGlobalTargetLanguage(value as Language)}} // Update global context
               disabled={!mounted}
             >
               <SelectTrigger id="quick-target-language" className="w-full">
@@ -138,7 +150,7 @@ export default function QuickTranslator() {
               </SelectTrigger>
               <SelectContent>
                 {SUPPORTED_LANGUAGES.map(lang => (
-                  <SelectItem key={`quick-target-${lang}`} value={lang} disabled={lang === sourceLanguage}>
+                  <SelectItem key={`quick-target-${lang}`} value={lang} disabled={lang === currentSourceLang}>
                     {lang}
                   </SelectItem>
                 ))}
@@ -148,26 +160,26 @@ export default function QuickTranslator() {
         </div>
 
         <Textarea
-          placeholder={`Enter text in ${sourceLanguage}...`}
+          placeholder={`Enter text in ${currentSourceLang}...`} // Use local display state
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           rows={4}
           className="resize-none text-base p-3 rounded-md shadow-sm focus:ring-primary focus:border-primary"
-          aria-label={`Input text in ${sourceLanguage}`}
-          disabled={!mounted}
+          aria-label={`Input text in ${currentSourceLang}`} // Use local display state
+          disabled={!mounted || isLoading}
         />
         <Textarea
-          placeholder={`Translation in ${targetLanguage} will appear here...`}
+          placeholder={`Translation in ${currentTargetLang} will appear here...`} // Use local display state
           value={outputText}
           readOnly
           rows={4}
           className="bg-muted/30 resize-none text-base p-3 rounded-md shadow-sm border-dashed"
-          aria-label={`Output text in ${targetLanguage}`}
+          aria-label={`Output text in ${currentTargetLang}`} // Use local display state
         />
-        
-        <Button 
-          onClick={handleTranslate} 
-          disabled={isLoading || !inputText.trim() || !mounted} 
+
+        <Button
+          onClick={handleTranslate}
+          disabled={isLoading || !inputText.trim() || !mounted}
           className="w-full py-2.5 text-base font-semibold"
           size="lg"
         >
@@ -178,7 +190,7 @@ export default function QuickTranslator() {
           )}
           Translate
         </Button>
-        
+
         {error && <p className="text-sm text-destructive text-center">{error}</p>}
       </CardContent>
     </Card>
