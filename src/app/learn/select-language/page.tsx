@@ -47,19 +47,18 @@ const languageOptions: LanguageOption[] = [
 
 export default function SelectLanguagePage() {
   const router = useRouter();
-  const { setTargetLanguage, setSourceLanguage, targetLanguage } = useGlobalAppContext();
+  const { setTargetLanguage, setSourceLanguage } = useGlobalAppContext();
 
-  const handleLanguageSelect = (language: Language) => {
-    setTargetLanguage(language);
-    // Optionally set source language to English if target is not English, or vice-versa
-    if (language === "English") {
-      const otherNonEnglishLanguage = SUPPORTED_LANGUAGES.find(l => l !== "English");
-      if (otherNonEnglishLanguage && targetLanguage === "English") { // ensure targetLanguage is updated for the check
-         setSourceLanguage(otherNonEnglishLanguage);
-      } else if (!SUPPORTED_LANGUAGES.includes(targetLanguage)) { // if current targetLanguage is somehow invalid
-         setSourceLanguage(SUPPORTED_LANGUAGES[1]); // Default to Tagalog or other
-      }
+  const handleLanguageSelect = (chosenLearnLanguage: Language) => {
+    setTargetLanguage(chosenLearnLanguage);
+
+    if (chosenLearnLanguage === "English") {
+      // If the user wants to learn English, set the source to a non-English language.
+      // Default to Tagalog or the first available non-English language.
+      const newSource = SUPPORTED_LANGUAGES.find(l => l !== "English") || SUPPORTED_LANGUAGES[0];
+      setSourceLanguage(newSource);
     } else {
+      // If the user wants to learn a non-English language, set the source to English.
       setSourceLanguage("English");
     }
     router.push('/learn');

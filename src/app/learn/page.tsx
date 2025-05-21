@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { BookOpen, Zap, Map } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useGlobalAppContext } from '@/hooks/useGlobalAppContext';
 
 const learningSections = [
   {
@@ -39,14 +40,16 @@ const learningSections = [
 ];
 
 export default function LearnPage() {
+  const { targetLanguage } = useGlobalAppContext();
+
   return (
     <AppLayout>
       <div className="text-center mb-12">
         <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4">
-          Let's Learn!
+          Let's Learn {targetLanguage}!
         </h1>
         <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
-          Embark on your language learning journey. Explore structured paths, dive into topics, or challenge your skills.
+          Embark on your language learning journey in {targetLanguage}. Explore structured paths, dive into topics, or challenge your skills.
         </p>
       </div>
 
@@ -94,9 +97,9 @@ export default function LearnPage() {
             />
           </div>
           <div>
-            <h2 className="text-2xl font-semibold mb-2">Ready to Start Learning?</h2>
+            <h2 className="text-2xl font-semibold mb-2">Ready to Start Learning {targetLanguage}?</h2>
             <p className="text-muted-foreground mb-4">
-              Choose a section above to begin your adventure. New content and features will be added regularly to help you achieve fluency!
+              Choose a section above to begin your adventure. New content and features will be added regularly to help you achieve fluency in {targetLanguage}!
             </p>
             <Button variant="outline" disabled>
               View Progress (Coming Soon)
