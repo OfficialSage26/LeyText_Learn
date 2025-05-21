@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'LinguaLeap',
-  description: 'Learn Tagalog, English, Bisaya, and Waray-Waray with LinguaLeap!',
+  title: 'LeyText Learn',
+  description: 'Learn Tagalog, English, Bisaya, and Waray-Waray with LeyText Learn!',
 };
 
 export default function RootLayout({

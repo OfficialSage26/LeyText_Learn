@@ -17,7 +17,7 @@ export default function Header() {
         <div className="container flex h-16 items-center">
           <Link href="/" className="mr-6 flex items-center space-x-2">
             <LogoIcon className="h-6 w-6 text-primary" />
-            <span className="font-bold text-lg">LinguaLeap</span>
+            <span className="font-bold text-lg">LeyText Learn</span>
           </Link>
           <div className="flex flex-1 items-center justify-end space-x-2">
             {/* Placeholder for mobile menu if needed, or full menu on desktop */}
@@ -32,7 +32,7 @@ export default function Header() {
       <div className="container flex h-16 items-center">
         <Link href="/" className="mr-6 flex items-center space-x-2">
           <LogoIcon className="h-6 w-6 text-primary" />
-          <span className="font-bold text-lg">LinguaLeap</span>
+          <span className="font-bold text-lg">LeyText Learn</span>
         </Link>
         
         <div className="hidden md:flex flex-1 items-center justify-end">
@@ -51,7 +51,7 @@ export default function Header() {
               <div className="p-4">
                 <Link href="/" className="flex items-center space-x-2 mb-4">
                   <LogoIcon className="h-6 w-6 text-primary" />
-                  <span className="font-bold text-lg">LinguaLeap</span>
+                  <span className="font-bold text-lg">LeyText Learn</span>
                 </Link>
               </div>
               <NavMenu isMobile={true} />

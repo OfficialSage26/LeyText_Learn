@@ -13,7 +13,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         {children}
       </main>
       <footer className="text-center py-6 text-sm text-muted-foreground border-t bg-background">
-        LinguaLeap &copy; {new Date().getFullYear()} - John Ashly O. Gasacao (BSIT-1B)
+        LeyText Learn &copy; {new Date().getFullYear()} - John Ashly O. Gasacao (BSIT-1B)
       </footer>
     </div>
   );

@@ -51,7 +51,7 @@ export default function HomePage() {
     <AppLayout>
       <div className="text-center mb-12">
         <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4">
-          Welcome to <span className="text-primary">LinguaLeap</span>!
+          Welcome to <span className="text-primary">LeyText Learn</span>!
         </h1>
         <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
           Your personal guide to mastering Tagalog, English, Bisaya, and Waray-Waray. 

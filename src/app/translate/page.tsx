@@ -110,7 +110,7 @@ export default function TranslatePage() {
           <CardHeader className="text-center">
             <CardTitle className="text-3xl font-bold">
               <Languages className="inline-block mr-2 h-8 w-8 text-primary" />
-              LinguaLeap Translator
+              LeyText Translator
             </CardTitle>
             <CardDescription>
               Translate text between {SUPPORTED_LANGUAGES.join(', ').replace(/, ([^,]*)$/, ' and $1')}.
