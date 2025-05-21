@@ -4,7 +4,7 @@
 import AppLayout from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Zap, Map } from 'lucide-react';
+import { BookOpen, Zap, Map, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useGlobalAppContext } from '@/hooks/useGlobalAppContext';
@@ -14,7 +14,7 @@ const learningSections = [
     title: "Your Learning Path",
     description: "Follow guided lessons and track your progress through different language levels.",
     icon: Map,
-    href: "/learn/path", // Placeholder link
+    href: "/learn/path",
     imageSrc: "https://placehold.co/600x400.png",
     dataAiHint: "map journey",
     cta: "Start Path",
@@ -23,7 +23,7 @@ const learningSections = [
     title: "Explore Topics",
     description: "Dive into specific themes like travel, food, or business conversations.",
     icon: BookOpen,
-    href: "/learn/topics", // Placeholder link
+    href: "/learn/topics",
     imageSrc: "https://placehold.co/600x400.png",
     dataAiHint: "books library",
     cta: "Browse Topics",
@@ -32,7 +32,7 @@ const learningSections = [
     title: "Practice Challenges",
     description: "Test your skills with interactive exercises and real-world scenarios.",
     icon: Zap,
-    href: "/learn/challenges", // Placeholder link
+    href: "/learn/challenges",
     imageSrc: "https://placehold.co/600x400.png",
     dataAiHint: "game controller",
     cta: "Take a Challenge",
@@ -74,11 +74,9 @@ export default function LearnPage() {
             </CardHeader>
             <CardContent className="flex-grow" />
             <CardContent className="p-6 pt-0">
-               {/* Hiding button for now as links are placeholders */}
-              {/* <Button asChild className="w-full">
+              <Button asChild className="w-full">
                 <Link href={section.href}>{section.cta}</Link>
-              </Button> */}
-               <p className="text-sm text-muted-foreground text-center">Content coming soon!</p>
+              </Button>
             </CardContent>
           </Card>
         ))}
@@ -107,7 +105,13 @@ export default function LearnPage() {
           </div>
         </CardContent>
       </Card>
-
+      <div className="mt-8 text-center">
+        <Button variant="outline" asChild>
+          <Link href="/learn/select-language">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Change Language to Learn
+          </Link>
+        </Button>
+      </div>
     </AppLayout>
   );
 }
