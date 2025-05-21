@@ -2,11 +2,10 @@
 "use client";
 
 import AppLayout from '@/components/layout/AppLayout';
-import LanguageSelector from '@/components/LanguageSelector';
-import QuickTranslator from '@/components/QuickTranslator'; // Import the new component
+import QuickTranslator from '@/components/QuickTranslator'; 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookOpen, Layers, HelpCircle, Sparkles } from 'lucide-react';
+import { BookOpen, Layers, HelpCircle, Sparkles, Languages } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -43,7 +42,14 @@ const featureCards = [
     color: 'text-yellow-500',
     dataAiHint: 'ai robot',
   },
-  // Removed the "Instant Translator" card as it's now embedded
+  {
+    title: 'Full Page Translator',
+    description: 'Dedicated page for more extensive translation tasks.',
+    icon: Languages,
+    href: '/translate',
+    color: 'text-orange-500', // Example color
+    dataAiHint: 'translate globe',
+  }
 ];
 
 export default function HomePage() {
@@ -63,13 +69,10 @@ export default function HomePage() {
         <QuickTranslator /> 
       </div>
       
-      <div className="mb-12">
-        <LanguageSelector />
-      </div>
-
+      {/* Removed the standalone LanguageSelector here */}
 
       <h2 className="text-3xl font-bold text-center mb-8">Explore Features</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12"> {/* Adjusted grid for 4 items */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
         {featureCards.map((feature) => (
           <Link href={feature.href} key={feature.title} legacyBehavior>
             <a className="block hover:no-underline">
@@ -91,7 +94,7 @@ export default function HomePage() {
         <CardContent className="p-6 md:p-10 flex flex-col md:flex-row items-center gap-6">
           <div className="flex-shrink-0">
             <Image 
-              src="https://placehold.co/200x200.png" 
+              src="https://placehold.co/150x150.png" 
               alt="Learn Languages" 
               width={150} 
               height={150} 
@@ -102,7 +105,7 @@ export default function HomePage() {
           <div>
             <h2 className="text-2xl font-semibold mb-2">Ready to Dive In?</h2>
             <p className="text-muted-foreground mb-4">
-              Select your languages above and explore the features to start learning. 
+              Select your languages in the Quick Translator above and explore the features to start learning. 
               Add words to your list, practice with flashcards, and test yourself with quizzes!
             </p>
             <Button asChild size="lg">
