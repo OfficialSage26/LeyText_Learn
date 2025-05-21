@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { ReactNode } from 'react';
@@ -6,6 +7,27 @@ import type { WordEntry, Language, QuizScore } from '@/types';
 import { SUPPORTED_LANGUAGES } from '@/types';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { v4 as uuidv4 } from 'uuid'; // For generating unique IDs
+
+const initialWords: WordEntry[] = [
+  { id: uuidv4(), word: "Hello", meaning: "Kumusta", language: "English", targetLanguage: "Tagalog", category: "Greetings", createdAt: Date.now() - 300000 },
+  { id: uuidv4(), word: "Thank you", meaning: "Salamat", language: "English", targetLanguage: "Tagalog", category: "Common Phrases", createdAt: Date.now() - 280000 },
+  { id: uuidv4(), word: "Good morning", meaning: "Magandang umaga", language: "English", targetLanguage: "Tagalog", category: "Greetings", createdAt: Date.now() - 260000 },
+  { id: uuidv4(), word: "Yes", meaning: "Oo", language: "English", targetLanguage: "Tagalog", category: "Common Phrases", createdAt: Date.now() - 240000 },
+  { id: uuidv4(), word: "No", meaning: "Hindi", language: "English", targetLanguage: "Tagalog", category: "Common Phrases", createdAt: Date.now() - 220000 },
+
+  { id: uuidv4(), word: "Hello", meaning: "Kumusta", language: "English", targetLanguage: "Bisaya", category: "Greetings", createdAt: Date.now() - 200000 },
+  { id: uuidv4(), word: "Thank you", meaning: "Salamat", language: "English", targetLanguage: "Bisaya", category: "Common Phrases", createdAt: Date.now() - 180000 },
+  { id: uuidv4(), word: "Good morning", meaning: "Maayong buntag", language: "English", targetLanguage: "Bisaya", category: "Greetings", createdAt: Date.now() - 160000 },
+  { id: uuidv4(), word: "Yes", meaning: "Oo", language: "English", targetLanguage: "Bisaya", category: "Common Phrases", createdAt: Date.now() - 140000 },
+  { id: uuidv4(), word: "No", meaning: "Dili", language: "English", targetLanguage: "Bisaya", category: "Common Phrases", createdAt: Date.now() - 120000 },
+
+  { id: uuidv4(), word: "Hello", meaning: "Kumusta", language: "English", targetLanguage: "Waray-Waray", category: "Greetings", createdAt: Date.now() - 100000 },
+  { id: uuidv4(), word: "Thank you", meaning: "Salamat", language: "English", targetLanguage: "Waray-Waray", category: "Common Phrases", createdAt: Date.now() - 80000 },
+  { id: uuidv4(), word: "Good morning", meaning: "Maupay nga aga", language: "English", targetLanguage: "Waray-Waray", category: "Greetings", createdAt: Date.now() - 60000 },
+  { id: uuidv4(), word: "Yes", meaning: "Oo", language: "English", targetLanguage: "Waray-Waray", category: "Common Phrases", createdAt: Date.now() - 40000 },
+  { id: uuidv4(), word: "No", meaning: "Dire", language: "English", targetLanguage: "Waray-Waray", category: "Common Phrases", createdAt: Date.now() - 20000 },
+];
+
 
 interface GlobalAppContextType {
   sourceLanguage: Language;
@@ -29,7 +51,7 @@ const GlobalAppContext = createContext<GlobalAppContextType | undefined>(undefin
 export function GlobalAppContextProvider({ children }: { children: ReactNode }) {
   const [sourceLanguage, setSourceLanguage] = useLocalStorage<Language>('sourceLanguage', SUPPORTED_LANGUAGES[0]);
   const [targetLanguage, setTargetLanguage] = useLocalStorage<Language>('targetLanguage', SUPPORTED_LANGUAGES[1]);
-  const [words, setWords] = useLocalStorage<WordEntry[]>('wordList', []);
+  const [words, setWords] = useLocalStorage<WordEntry[]>('wordList', initialWords);
   const [quizScores, setQuizScores] = useLocalStorage<QuizScore[]>('quizScores', []);
 
   const addWord = useCallback((wordData: Omit<WordEntry, 'id' | 'createdAt' | 'aiSentences'>): WordEntry => {
@@ -62,8 +84,6 @@ export function GlobalAppContextProvider({ children }: { children: ReactNode }) 
   }, [words]);
 
   const getWordsForFlashcards = useCallback((): WordEntry[] => {
-    // For flashcards, we typically use words where the word's language matches the source language
-    // and the meaning's language matches the target language.
     return words.filter(word => word.language === sourceLanguage && word.targetLanguage === targetLanguage);
   }, [words, sourceLanguage, targetLanguage]);
 

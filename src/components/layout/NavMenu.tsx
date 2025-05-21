@@ -5,13 +5,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Layers, HelpCircle, Languages } from 'lucide-react'; // Added Languages icon
+import { BookOpen, Layers, HelpCircle, Languages, GraduationCap } from 'lucide-react';
 
 const navItems = [
+  { href: '/learn', label: 'Learn', icon: GraduationCap },
   { href: '/word-lists', label: 'Word Lists', icon: BookOpen },
   { href: '/flashcards', label: 'Flashcards', icon: Layers },
   { href: '/quizzes', label: 'Quizzes', icon: HelpCircle },
-  { href: '/translate', label: 'Translate', icon: Languages }, // Added Translate page
+  { href: '/translate', label: 'Translate', icon: Languages },
 ];
 
 type NavMenuProps = {
@@ -27,7 +28,7 @@ export default function NavMenu({ isMobile = false }: NavMenuProps) {
         {navItems.map((item) => (
           <Button
             key={item.href}
-            variant={pathname === item.href ? "secondary" : "ghost"}
+            variant={pathname === item.href || (pathname.startsWith(item.href) && item.href !== '/') ? "secondary" : "ghost"}
             asChild
             className="justify-start"
           >
@@ -46,7 +47,7 @@ export default function NavMenu({ isMobile = false }: NavMenuProps) {
       {navItems.map((item) => (
         <Button
           key={item.href}
-          variant={pathname === item.href ? "secondary" : "ghost"}
+          variant={pathname === item.href || (pathname.startsWith(item.href) && item.href !== '/') ? "secondary" : "ghost"}
           asChild
           size="sm"
         >

@@ -5,11 +5,19 @@ import AppLayout from '@/components/layout/AppLayout';
 import QuickTranslator from '@/components/QuickTranslator'; 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookOpen, Layers, HelpCircle, Sparkles, Languages } from 'lucide-react';
+import { BookOpen, Layers, HelpCircle, Sparkles, Languages, GraduationCap } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
 const featureCards = [
+  {
+    title: 'Embark on a Learning Journey',
+    description: 'Access guided lessons, tutorials, and challenges like Duolingo.',
+    icon: GraduationCap,
+    href: '/learn',
+    color: 'text-indigo-500',
+    dataAiHint: 'graduation cap book',
+  },
   {
     title: 'Custom Word Lists',
     description: 'Create, manage, and categorize your personal vocabulary lists.',
@@ -41,14 +49,6 @@ const featureCards = [
     href: '/word-lists', // Integrated into word lists
     color: 'text-yellow-500',
     dataAiHint: 'ai robot',
-  },
-  {
-    title: 'Full Page Translator',
-    description: 'Dedicated page for more extensive translation tasks.',
-    icon: Languages,
-    href: '/translate',
-    color: 'text-orange-500', // Example color
-    dataAiHint: 'translate globe',
   }
 ];
 
@@ -69,8 +69,6 @@ export default function HomePage() {
         <QuickTranslator /> 
       </div>
       
-      {/* Removed the standalone LanguageSelector here */}
-
       <h2 className="text-3xl font-bold text-center mb-8">Explore Features</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
         {featureCards.map((feature) => (
@@ -105,11 +103,10 @@ export default function HomePage() {
           <div>
             <h2 className="text-2xl font-semibold mb-2">Ready to Dive In?</h2>
             <p className="text-muted-foreground mb-4">
-              Select your languages in the Quick Translator above and explore the features to start learning. 
-              Add words to your list, practice with flashcards, and test yourself with quizzes!
+              Explore the features or kickstart your structured learning journey to master your chosen languages!
             </p>
             <Button asChild size="lg">
-              <Link href="/word-lists">Get Started <BookOpen className="ml-2 h-5 w-5" /></Link>
+              <Link href="/learn">Let's Learn <GraduationCap className="ml-2 h-5 w-5" /></Link>
             </Button>
           </div>
         </CardContent>
