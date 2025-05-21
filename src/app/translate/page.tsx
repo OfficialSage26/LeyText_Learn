@@ -13,28 +13,50 @@ import { useGlobalAppContext } from '@/hooks/useGlobalAppContext';
 import { SUPPORTED_LANGUAGES, type Language } from '@/types';
 import { translateText } from '@/ai/flows/translate-text-flow';
 import { useToast } from "@/hooks/use-toast";
+import { useMounted } from '@/hooks/useMounted';
 
 export default function TranslatePage() {
   const { sourceLanguage: globalSourceLang, targetLanguage: globalTargetLang } = useGlobalAppContext();
   const { toast } = useToast();
+  const mounted = useMounted();
 
   const [inputText, setInputText] = useState('');
   const [outputText, setOutputText] = useState('');
-  const [sourceLang, setSourceLang] = useState<Language>(globalSourceLang);
-  const [targetLang, setTargetLang] = useState<Language>(globalTargetLang);
+
+  // Initialize with fixed defaults for SSR, then update on client mount
+  const [sourceLang, setSourceLang] = useState<Language>(SUPPORTED_LANGUAGES[0]);
+  const [targetLang, setTargetLang] = useState<Language>(() => {
+    const initialDefaultSource = SUPPORTED_LANGUAGES[0];
+    let initialDefaultTarget = SUPPORTED_LANGUAGES[1];
+    if (initialDefaultSource === initialDefaultTarget) {
+      initialDefaultTarget = SUPPORTED_LANGUAGES.find(lang => lang !== initialDefaultSource) 
+                           || SUPPORTED_LANGUAGES[0];
+    }
+    return initialDefaultTarget;
+  });
+  
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Ensure source and target languages are never the same on initial load if global ones are
-    if (globalSourceLang === globalTargetLang) {
-      const newTarget = SUPPORTED_LANGUAGES.find(l => l !== globalSourceLang) || SUPPORTED_LANGUAGES[1];
-      setTargetLang(newTarget);
-    } else {
-      setSourceLang(globalSourceLang);
-      setTargetLang(globalTargetLang);
+    if (mounted) {
+      let newSourceLang = globalSourceLang;
+      let newTargetLang = globalTargetLang;
+
+      if (globalSourceLang === globalTargetLang) {
+        newTargetLang = SUPPORTED_LANGUAGES.find(l => l !== globalSourceLang) ||
+                        SUPPORTED_LANGUAGES.find(l => l !== SUPPORTED_LANGUAGES[0]) || 
+                        SUPPORTED_LANGUAGES[1];
+      }
+      
+      if (newSourceLang !== sourceLang) {
+        setSourceLang(newSourceLang);
+      }
+      if (newTargetLang !== targetLang && newTargetLang) {
+        setTargetLang(newTargetLang);
+      }
     }
-  }, [globalSourceLang, globalTargetLang]);
+  }, [mounted, globalSourceLang, globalTargetLang, sourceLang, targetLang]);
 
 
   const handleSwapLanguages = () => {
@@ -100,7 +122,8 @@ export default function TranslatePage() {
                 <Label htmlFor="source-language-select" className="mb-1 block text-sm font-medium">From</Label>
                 <Select 
                   value={sourceLang} 
-                  onValueChange={(value) => setSourceLang(value as Language)}
+                  onValueChange={(value) => { if (mounted) setSourceLang(value as Language)}}
+                  disabled={!mounted}
                 >
                   <SelectTrigger id="source-language-select" className="w-full">
                     <SelectValue placeholder="Select source language" />
@@ -116,7 +139,7 @@ export default function TranslatePage() {
               </div>
 
               <div className="self-center pt-0 sm:pt-5">
-                <Button variant="ghost" size="icon" onClick={handleSwapLanguages} aria-label="Swap languages">
+                <Button variant="ghost" size="icon" onClick={handleSwapLanguages} aria-label="Swap languages" disabled={!mounted}>
                   <ArrowRightLeft className="h-5 w-5" />
                 </Button>
               </div>
@@ -125,7 +148,8 @@ export default function TranslatePage() {
                 <Label htmlFor="target-language-select" className="mb-1 block text-sm font-medium">To</Label>
                 <Select 
                   value={targetLang} 
-                  onValueChange={(value) => setTargetLang(value as Language)}
+                  onValueChange={(value) => { if (mounted) setTargetLang(value as Language)}}
+                  disabled={!mounted}
                 >
                   <SelectTrigger id="target-language-select" className="w-full">
                     <SelectValue placeholder="Select target language" />
@@ -149,6 +173,7 @@ export default function TranslatePage() {
                 rows={6}
                 className="resize-none text-base p-4 rounded-md shadow-sm focus:ring-primary focus:border-primary"
                 aria-label={`Input text in ${sourceLang}`}
+                disabled={!mounted}
               />
               <Textarea
                 placeholder={`Translation in ${targetLang} will appear here...`}
@@ -162,7 +187,7 @@ export default function TranslatePage() {
             
             <Button 
               onClick={handleTranslate} 
-              disabled={isLoading || !inputText.trim()} 
+              disabled={isLoading || !inputText.trim() || !mounted} 
               className="w-full py-3 text-base font-semibold"
               size="lg"
             >

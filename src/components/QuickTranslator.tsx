@@ -12,45 +12,51 @@ import { useGlobalAppContext } from '@/hooks/useGlobalAppContext';
 import { SUPPORTED_LANGUAGES, type Language } from '@/types';
 import { translateText } from '@/ai/flows/translate-text-flow';
 import { useToast } from "@/hooks/use-toast";
+import { useMounted } from '@/hooks/useMounted';
 
 export default function QuickTranslator() {
   const { sourceLanguage: globalSourceLang, targetLanguage: globalTargetLang } = useGlobalAppContext();
   const { toast } = useToast();
+  const mounted = useMounted();
 
   const [inputText, setInputText] = useState('');
   const [outputText, setOutputText] = useState('');
-  const [sourceLang, setSourceLang] = useState<Language>(globalSourceLang);
-  const [targetLang, setTargetLang] = useState<Language>(globalTargetLang);
+
+  // Initialize with fixed defaults for SSR, then update on client mount based on global context
+  const [sourceLang, setSourceLang] = useState<Language>(SUPPORTED_LANGUAGES[0]);
+  const [targetLang, setTargetLang] = useState<Language>(() => {
+    const initialDefaultSource = SUPPORTED_LANGUAGES[0];
+    let initialDefaultTarget = SUPPORTED_LANGUAGES[1];
+    if (initialDefaultSource === initialDefaultTarget) {
+      initialDefaultTarget = SUPPORTED_LANGUAGES.find(lang => lang !== initialDefaultSource) 
+                           || SUPPORTED_LANGUAGES[0]; 
+    }
+    return initialDefaultTarget;
+  });
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Initialize local languages from global, ensuring they are different
-    if (globalSourceLang === globalTargetLang) {
-      const newTarget = SUPPORTED_LANGUAGES.find(l => l !== globalSourceLang) || SUPPORTED_LANGUAGES[1];
-      setSourceLang(globalSourceLang);
-      setTargetLang(newTarget);
-    } else {
-      setSourceLang(globalSourceLang);
-      setTargetLang(globalTargetLang);
-    }
-  }, [globalSourceLang, globalTargetLang]);
+    if (mounted && !isLoading) { 
+      let newSourceLang = globalSourceLang;
+      let newTargetLang = globalTargetLang;
 
-  // Update local state if global languages change, but only if not currently translating
-  useEffect(() => {
-    if (!isLoading) {
-        if (globalSourceLang !== sourceLang) setSourceLang(globalSourceLang);
-        if (globalTargetLang !== targetLang) {
-            if (globalTargetLang !== sourceLang) { // Ensure target is not same as current source
-                setTargetLang(globalTargetLang);
-            } else {
-                 // If global target becomes same as local source, pick a different target
-                const newTarget = SUPPORTED_LANGUAGES.find(l => l !== sourceLang) || SUPPORTED_LANGUAGES.find(l => l !== globalSourceLang) || SUPPORTED_LANGUAGES[1];
-                if (newTarget) setTargetLang(newTarget);
-            }
-        }
+      if (globalSourceLang === globalTargetLang) {
+        newTargetLang = SUPPORTED_LANGUAGES.find(l => l !== globalSourceLang) ||
+                        SUPPORTED_LANGUAGES.find(l => l !== SUPPORTED_LANGUAGES[0]) || 
+                        SUPPORTED_LANGUAGES[1];
+      }
+      
+      if (newSourceLang !== sourceLang) {
+        setSourceLang(newSourceLang);
+      }
+      // Ensure targetLang is also updated if it's different from the newTargetLang derived from global context
+      if (newTargetLang !== targetLang && newTargetLang) { 
+        setTargetLang(newTargetLang);
+      }
     }
-  }, [globalSourceLang, globalTargetLang, isLoading, sourceLang]);
+  }, [mounted, globalSourceLang, globalTargetLang, isLoading, sourceLang, targetLang]);
 
 
   const handleSwapLanguages = () => {
@@ -113,7 +119,8 @@ export default function QuickTranslator() {
             <Label htmlFor="quick-source-language" className="mb-1 block text-sm font-medium">From</Label>
             <Select 
               value={sourceLang} 
-              onValueChange={(value) => setSourceLang(value as Language)}
+              onValueChange={(value) => { if (mounted) setSourceLang(value as Language)}}
+              disabled={!mounted}
             >
               <SelectTrigger id="quick-source-language" className="w-full">
                 <SelectValue placeholder="Select source language" />
@@ -129,7 +136,7 @@ export default function QuickTranslator() {
           </div>
 
           <div className="self-center pt-0 sm:pt-5">
-            <Button variant="ghost" size="icon" onClick={handleSwapLanguages} aria-label="Swap languages">
+            <Button variant="ghost" size="icon" onClick={handleSwapLanguages} aria-label="Swap languages" disabled={!mounted}>
               <ArrowRightLeft className="h-5 w-5" />
             </Button>
           </div>
@@ -138,7 +145,8 @@ export default function QuickTranslator() {
             <Label htmlFor="quick-target-language" className="mb-1 block text-sm font-medium">To</Label>
             <Select 
               value={targetLang} 
-              onValueChange={(value) => setTargetLang(value as Language)}
+              onValueChange={(value) => { if (mounted) setTargetLang(value as Language)}}
+              disabled={!mounted}
             >
               <SelectTrigger id="quick-target-language" className="w-full">
                 <SelectValue placeholder="Select target language" />
@@ -161,6 +169,7 @@ export default function QuickTranslator() {
           rows={4}
           className="resize-none text-base p-3 rounded-md shadow-sm focus:ring-primary focus:border-primary"
           aria-label={`Input text in ${sourceLang}`}
+          disabled={!mounted}
         />
         <Textarea
           placeholder={`Translation in ${targetLang} will appear here...`}
@@ -173,7 +182,7 @@ export default function QuickTranslator() {
         
         <Button 
           onClick={handleTranslate} 
-          disabled={isLoading || !inputText.trim()} 
+          disabled={isLoading || !inputText.trim() || !mounted} 
           className="w-full py-2.5 text-base font-semibold"
           size="lg"
         >
@@ -190,4 +199,3 @@ export default function QuickTranslator() {
     </Card>
   );
 }
-
