@@ -92,14 +92,19 @@ export default function LearningPathPage() {
               </CardHeader>
               <CardContent className="flex-grow">
                 <p className="text-sm text-muted-foreground">Contains approximately {unit.lessons} lessons.</p>
-                {/* Placeholder for progress bar if needed in future */}
-                {/* <Progress value={unit.status === "Completed" ? 100 : unit.status === "In Progress" ? 30 : 0} className="mt-2 h-2" /> */}
               </CardContent>
               <CardFooter>
-                <Button className="w-full" disabled> 
-                  {/* For now, buttons are disabled. They will eventually link to unit-specific pages. */}
-                  <Star className="mr-2 h-4 w-4" /> Start Unit {index + 1} (Soon)
-                </Button>
+                {unit.id === "unit1" ? (
+                  <Button asChild className="w-full">
+                    <Link href={`/learn/path/unit/${unit.id}`}>
+                      <Star className="mr-2 h-4 w-4" /> Start Unit {index + 1}
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button className="w-full" disabled> 
+                    <Star className="mr-2 h-4 w-4" /> Start Unit {index + 1} (Soon)
+                  </Button>
+                )}
               </CardFooter>
             </Card>
           ))}
