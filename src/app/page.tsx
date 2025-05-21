@@ -3,9 +3,10 @@
 
 import AppLayout from '@/components/layout/AppLayout';
 import LanguageSelector from '@/components/LanguageSelector';
+import QuickTranslator from '@/components/QuickTranslator'; // Import the new component
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookOpen, Layers, HelpCircle, Sparkles, Languages } from 'lucide-react'; // Added Languages
+import { BookOpen, Layers, HelpCircle, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -42,14 +43,7 @@ const featureCards = [
     color: 'text-yellow-500',
     dataAiHint: 'ai robot',
   },
-  {
-    title: 'Instant Translator',
-    description: 'Translate text between supported languages with AI assistance.',
-    icon: Languages,
-    href: '/translate',
-    color: 'text-red-500', // Example color, can be adjusted
-    dataAiHint: 'translate language',
-  },
+  // Removed the "Instant Translator" card as it's now embedded
 ];
 
 export default function HomePage() {
@@ -65,9 +59,17 @@ export default function HomePage() {
         </p>
       </div>
 
-      <LanguageSelector />
+      <div className="mb-12">
+        <QuickTranslator /> 
+      </div>
+      
+      <div className="mb-12">
+        <LanguageSelector />
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12"> {/* Adjusted grid for 5 items */}
+
+      <h2 className="text-3xl font-bold text-center mb-8">Explore Features</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12"> {/* Adjusted grid for 4 items */}
         {featureCards.map((feature) => (
           <Link href={feature.href} key={feature.title} legacyBehavior>
             <a className="block hover:no-underline">
