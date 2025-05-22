@@ -36,8 +36,8 @@ const learningSections = [
     icon: Zap,
     href: "/learn/challenges",
     imageSrc: "https://placehold.co/600x400.png",
-    altText: "Illustration of a game controller or puzzle pieces, representing practice challenges.",
-    dataAiHint: "game controller",
+    altText: "Illustration of game elements like puzzles or achievement badges, representing practice challenges.",
+    dataAiHint: "game puzzle achievement",
     cta: "Take a Challenge",
   }
 ];
@@ -59,7 +59,7 @@ export default function LearnPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {learningSections.map((section) => (
           <Card key={section.title} className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
-            <div className="relative w-full h-48">
+            <div className="relative w-full h-40 sm:h-48">
               <Image 
                 src={section.imageSrc} 
                 alt={section.altText}
@@ -93,7 +93,7 @@ export default function LearnPage() {
               alt="LeyText Learn mascot, an owl with a book." 
               width={150} 
               height={150} 
-              className="rounded-lg shadow-md"
+              className="rounded-lg shadow-md w-24 h-24 sm:w-36 sm:h-36"
               data-ai-hint="owl book"
             />
           </div>

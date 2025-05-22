@@ -3,7 +3,7 @@
 
 import AppLayout from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { GraduationCap } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -15,10 +15,11 @@ export default function HomePage() {
         <Image 
           src="https://placehold.co/200x200.png" 
           alt="LeyText Learn App Icon - a stylized representation of language and learning." 
-          width={150} 
-          height={150} 
-          className="rounded-2xl shadow-lg"
-          data-ai-hint="language learning mobile app" 
+          width={200} 
+          height={200} 
+          className="rounded-2xl shadow-lg w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40"
+          data-ai-hint="language learning mobile app"
+          priority 
         />
         
         <div className="space-y-3">

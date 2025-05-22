@@ -91,7 +91,7 @@ export default function SelectLanguagePage() {
             aria-label={`Learn ${option.name}`}
             onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleLanguageSelect(option.name)}
           >
-            <div className="relative w-full h-48">
+            <div className="relative w-full h-40 sm:h-48">
               <Image 
                 src={option.imageSrc} 
                 alt={option.altText}
