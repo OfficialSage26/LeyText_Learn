@@ -39,7 +39,7 @@ try {
 }
 
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
-const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM'; // Default: "Rachel"
+const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'EJV7H2baGt5ab95tOoSG'; // Updated Default Voice ID
 const ELEVENLABS_MODEL_ID = 'eleven_multilingual_v2';
 
 async function synthesizeWithElevenLabs(text: string, language: Language): Promise<string | null> {
@@ -83,7 +83,7 @@ async function synthesizeWithElevenLabs(text: string, language: Language): Promi
 const languageToGoogleTTSConfig = (language: Language): { languageCode: string; name?: string } | null => {
   switch (language) {
     case "Tagalog":
-      return { languageCode: "fil-PH", name: "fil-PH-Standard-A" };
+      return { languageCode: "fil-PH", name: "fil-PH-Standard-A" }; // Example standard voice for Filipino
     // English could be added here if desired, e.g., { languageCode: "en-US", name: "en-US-Standard-C" }
     // Bisaya and Waray-Waray are not standardly supported by Google Cloud TTS with distinct voices.
     default:
