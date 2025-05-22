@@ -2,21 +2,21 @@
 "use client";
 
 import AppLayout from '@/components/layout/AppLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, BookOpen, Users, Utensils, MapPin, Users2, Clock, Lightbulb } from 'lucide-react';
+import { ArrowLeft, BookOpen, Users, Utensils, MapPin, Users2, Clock, Lightbulb, ShoppingCart, Building2 } from 'lucide-react';
 import Link from 'next/link';
 import { useGlobalAppContext } from '@/hooks/useGlobalAppContext';
 
 const sampleTopics = [
-  { name: "Greetings & Introductions", icon: Users, dataAiHint: "handshake people" },
-  { name: "Food & Dining", icon: Utensils, dataAiHint: "restaurant food" },
-  { name: "Travel & Directions", icon: MapPin, dataAiHint: "map location" },
-  { name: "Family & Relationships", icon: Users2, dataAiHint: "family people" },
-  { name: "Numbers & Time", icon: Clock, dataAiHint: "clock calendar" },
-  { name: "Common Verbs", icon: Lightbulb, dataAiHint: "idea action" },
-  { name: "Shopping", icon: Users, dataAiHint: "store cart" }, // Re-using Users icon for variety
-  { name: "Work & School", icon: BookOpen, dataAiHint: "office study" },
+  { name: "Greetings & Introductions", icon: Users, dataAiHint: "handshake people", ariaLabel: "Explore Greetings and Introductions topic" },
+  { name: "Food & Dining", icon: Utensils, dataAiHint: "restaurant food", ariaLabel: "Explore Food and Dining topic" },
+  { name: "Travel & Directions", icon: MapPin, dataAiHint: "map location", ariaLabel: "Explore Travel and Directions topic" },
+  { name: "Family & Relationships", icon: Users2, dataAiHint: "family people", ariaLabel: "Explore Family and Relationships topic" },
+  { name: "Numbers & Time", icon: Clock, dataAiHint: "clock calendar", ariaLabel: "Explore Numbers and Time topic" },
+  { name: "Common Verbs", icon: Lightbulb, dataAiHint: "idea action", ariaLabel: "Explore Common Verbs topic" },
+  { name: "Shopping", icon: ShoppingCart, dataAiHint: "store cart", ariaLabel: "Explore Shopping topic" }, 
+  { name: "Work & School", icon: Building2, dataAiHint: "office study", ariaLabel: "Explore Work and School topic" },
 ];
 
 
@@ -26,17 +26,17 @@ export default function ExploreTopicsPage() {
   return (
     <AppLayout>
       <div className="space-y-8">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              <BookOpen className="w-10 h-10 text-primary" />
-              <h1 className="text-3xl sm:text-4xl font-bold">Explore {targetLanguage} Topics</h1>
+            <div className="flex items-start sm:items-center gap-3 mb-2">
+              <BookOpen className="w-10 h-10 text-primary flex-shrink-0 mt-1 sm:mt-0" />
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Explore {targetLanguage} Topics</h1>
             </div>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-base sm:text-lg text-muted-foreground">
               Dive into specific themes to expand your {targetLanguage} vocabulary and understanding. Select a topic to begin (further content coming soon).
             </p>
           </div>
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" className="self-start sm:self-center mt-4 sm:mt-0">
             <Link href="/learn">
               <ArrowLeft className="mr-2 h-5 w-5" />
               Back to Learn Menu
@@ -48,27 +48,29 @@ export default function ExploreTopicsPage() {
           {sampleTopics.map((topic) => (
             <Card 
               key={topic.name} 
-              className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 cursor-pointer group"
-              tabIndex={0} // Make it focusable
-              // onClick={() => alert(`Navigating to ${topic.name} - Content coming soon!`)} // Placeholder action
-              // onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && alert(`Navigating to ${topic.name} - Content coming soon!`)} // Placeholder action
+              className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 cursor-pointer group flex flex-col"
+              tabIndex={0} 
+              role="button"
+              aria-label={topic.ariaLabel || `Explore ${topic.name} topic in ${targetLanguage}`}
+              // onClick={() => alert(`Navigating to ${topic.name} - Content coming soon!`)} 
+              // onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && alert(`Navigating to ${topic.name} - Content coming soon!`)} 
             >
-              <CardHeader className="pb-3">
-                <div className="flex flex-col items-center text-center">
+              <CardHeader className="pb-3 flex-grow">
+                <div className="flex flex-col items-center text-center h-full">
                   <topic.icon className="w-12 h-12 text-primary mb-3 group-hover:scale-110 transition-transform" />
                   <CardTitle className="text-xl">{topic.name}</CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
                 <p className="text-xs text-muted-foreground text-center">
-                  Learn words and phrases related to {topic.name.toLowerCase()} in {targetLanguage}.
+                  Learn words related to {topic.name.toLowerCase()} in {targetLanguage}.
                 </p>
               </CardContent>
-              {/* <CardFooter className="pt-3">
-                <Button variant="ghost" className="w-full text-primary group-hover:bg-primary/10">
-                  Explore Topic (Soon)
+              <CardFooter className="pt-3 mt-auto">
+                <Button variant="ghost" className="w-full text-primary group-hover:bg-primary/10" disabled>
+                  Explore (Soon)
                 </Button>
-              </CardFooter> */}
+              </CardFooter>
             </Card>
           ))}
         </div>

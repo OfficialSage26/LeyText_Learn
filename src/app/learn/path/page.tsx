@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Map, BookOpenText, MessageCircle, Building, Briefcase, Star } from 'lucide-react';
 import Link from 'next/link';
 import { useGlobalAppContext } from '@/hooks/useGlobalAppContext';
+import { cn } from '@/lib/utils';
 
 const learningUnits = [
   {
@@ -14,7 +15,7 @@ const learningUnits = [
     title: "Unit 1: Foundations",
     description: "Learn the absolute basics: alphabet, pronunciation, and simple greetings.",
     icon: BookOpenText,
-    status: "Not Started",
+    status: "Not Started", // Possible statuses: "Not Started", "In Progress", "Completed"
     lessons: 5,
     dataAiHint: "alphabet book",
   },
@@ -63,7 +64,7 @@ export default function LearningPathPage() {
               Follow these units to build your {targetLanguage} skills step by step. Each unit contains lessons and activities.
             </CardDescription>
           </div>
-          <Button asChild variant="outline" className="mt-4 sm:mt-0">
+          <Button asChild variant="outline" className="mt-4 sm:mt-0 self-start sm:self-center">
             <Link href="/learn">
               <ArrowLeft className="mr-2 h-5 w-5" />
               Back to Learn Menu
@@ -73,25 +74,34 @@ export default function LearningPathPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {learningUnits.map((unit, index) => (
-            <Card key={unit.id} className="shadow-lg flex flex-col">
+            <Card 
+              key={unit.id} 
+              className="shadow-lg flex flex-col"
+              aria-labelledby={`unit-title-${unit.id}`}
+              aria-describedby={`unit-desc-${unit.id} unit-lessons-${unit.id} unit-status-desc-${unit.id}`}
+            >
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div className="flex items-center gap-3">
-                    <unit.icon className="w-8 h-8 text-primary" />
-                    <CardTitle className="text-xl">{unit.title}</CardTitle>
+                    <unit.icon className="w-8 h-8 text-primary flex-shrink-0" />
+                    <CardTitle id={`unit-title-${unit.id}`} className="text-xl">{unit.title}</CardTitle>
                   </div>
-                  <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                    unit.status === "Completed" ? "bg-green-100 text-green-700" : 
-                    unit.status === "In Progress" ? "bg-yellow-100 text-yellow-700" :
-                    "bg-muted text-muted-foreground"
-                  }`}>
+                  <span 
+                    className={cn(
+                      "text-xs font-semibold px-2 py-1 rounded-full self-start sm:self-center mt-2 sm:mt-0",
+                      unit.status === "Completed" ? "bg-green-100 text-green-700" : 
+                      unit.status === "In Progress" ? "bg-yellow-100 text-yellow-700" :
+                      "bg-muted text-muted-foreground"
+                    )}
+                  >
                     {unit.status}
+                    <span id={`unit-status-desc-${unit.id}`} className="sr-only">Status: {unit.status}</span>
                   </span>
                 </div>
-                <CardDescription>{unit.description}</CardDescription>
+                <CardDescription id={`unit-desc-${unit.id}`}>{unit.description}</CardDescription>
               </CardHeader>
               <CardContent className="flex-grow">
-                <p className="text-sm text-muted-foreground">Contains approximately {unit.lessons} lessons.</p>
+                <p id={`unit-lessons-${unit.id}`} className="text-sm text-muted-foreground">Contains approximately {unit.lessons} lessons.</p>
               </CardContent>
               <CardFooter>
                 {unit.id === "unit1" ? (
