@@ -111,7 +111,7 @@ export default function QuickTranslator() {
             setSttError("Audio capture error. Please ensure your microphone is working and not in use by another app.");
           }
            else {
-            setSttError(`Speech recognition error: ${event.error}`);
+            setSttError(`Speech recognition error: ${event.error}. Please ensure microphone access is allowed.`);
           }
           setIsListening(false);
         };
@@ -201,12 +201,20 @@ export default function QuickTranslator() {
       utterance.lang = languageToBcp47(lang);
       utterance.onerror = (event) => {
         console.error("SpeechSynthesisUtterance error", event);
-        toast({ title: "Speech Error", description: `Could not speak text for ${lang}.`, variant: "destructive" });
+        toast({ 
+          title: "Speech Error", 
+          description: `Could not speak text for ${lang}. Voice quality and availability depend on your browser and OS.`, 
+          variant: "destructive" 
+        });
       };
       speechSynthesis.speak(utterance);
     } catch (e) {
       console.error("Error in handleSpeak:", e);
-      toast({ title: "Speech Error", description: "An unexpected error occurred while trying to speak.", variant: "destructive" });
+      toast({ 
+        title: "Speech Error", 
+        description: "An unexpected error occurred while trying to speak. Voice quality and availability depend on your browser and OS.", 
+        variant: "destructive" 
+      });
     }
   };
 
