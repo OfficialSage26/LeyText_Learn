@@ -73,7 +73,7 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
         onClick={() => setIsFlipped(!isFlipped)}
         role="button"
         tabIndex={0}
-        aria-label={`Flashcard: ${currentWord.word}. ${isFlipped ? `Meaning: ${currentWord.meaning}` : 'Tap to see meaning.'}`}
+        aria-label={`Flashcard: ${currentWord.word} (in ${currentWord.language}). ${isFlipped ? `Meaning: ${currentWord.meaning} (in ${currentWord.targetLanguage})` : 'Tap to see meaning.'}`}
         onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setIsFlipped(!isFlipped)}
       >
         {/* Front of the card */}
@@ -116,7 +116,7 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
             {currentWord.userSentence && <p className="text-sm italic mb-2">"{currentWord.userSentence}"</p>}
             {currentWord.aiSentences && currentWord.aiSentences.length > 0 && (
               <div className="text-xs mt-2 text-accent-foreground/80">
-                <p className="font-medium mb-1">AI Examples:</p>
+                <p className="font-medium mb-1">AI Examples (in {currentWord.language}):</p>
                 <ul className="list-disc list-inside space-y-0.5 max-h-24 overflow-y-auto">
                   {currentWord.aiSentences.map((s, i) => <li key={i}><em>{s}</em></li>)}
                 </ul>
@@ -134,17 +134,17 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
       `}</style>
 
       <div className="flex items-center justify-between w-full max-w-md">
-        <Button variant="outline" onClick={handlePrev} aria-label="Previous card">
+        <Button variant="outline" onClick={handlePrev} aria-label="Previous card" disabled={shuffledWords.length <= 1}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Prev
         </Button>
         <p className="text-sm text-muted-foreground" aria-live="polite">
           Card {shuffledWords.length > 0 ? (currentIndex % shuffledWords.length) + 1 : 0} of {shuffledWords.length}
         </p>
-        <Button variant="outline" onClick={handleNext} aria-label="Next card">
+        <Button variant="outline" onClick={handleNext} aria-label="Next card" disabled={shuffledWords.length <= 1}>
           Next <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
-      <Button variant="secondary" onClick={handleShuffle} aria-label="Shuffle cards">
+      <Button variant="secondary" onClick={handleShuffle} aria-label="Shuffle cards" disabled={shuffledWords.length <= 1}>
         <Shuffle className="mr-2 h-4 w-4" /> Shuffle
       </Button>
       <div className="text-center text-muted-foreground text-sm mt-4">
@@ -154,3 +154,4 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
     </div>
   );
 }
+
