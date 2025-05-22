@@ -11,7 +11,7 @@ import { ArrowRightLeft, Languages, Loader2, Mic, Volume2, X, AlertTriangle } fr
 import { useGlobalAppContext } from '@/hooks/useGlobalAppContext';
 import { SUPPORTED_LANGUAGES, type Language } from '@/types';
 import { translateText } from '@/ai/flows/translate-text-flow';
-import { synthesizeSpeech } from '@/ai/flows/synthesize-speech-flow';
+// Removed: import { synthesizeSpeech } from '@/ai/flows/synthesize-speech-flow';
 import { useToast } from "@/hooks/use-toast";
 import { useMounted } from '@/hooks/useMounted';
 import { cn } from '@/lib/utils';
@@ -35,13 +35,13 @@ declare global {
   }
 }
 
-// BCP 47 language codes for Web Speech API (STT and fallback TTS)
+// BCP 47 language codes for Web Speech API (STT and TTS)
 const languageToBcp47 = (lang: Language): string => {
   switch (lang) {
     case "English": return "en-US";
     case "Tagalog": return "tl-PH";
-    case "Bisaya": return "ceb-PH"; // Cebuano for Bisaya (if supported by browser STT/TTS)
-    case "Waray-Waray": return "war-PH"; // Waray (if supported by browser STT/TTS)
+    case "Bisaya": return "ceb-PH"; // Cebuano for Bisaya
+    case "Waray-Waray": return "war-PH"; // Waray (less common, browser support varies)
     default: return "en-US";
   }
 };
@@ -67,8 +67,10 @@ export default function QuickTranslator() {
   const [speechRecognition, setSpeechRecognition] = useState<SpeechRecognition | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [sttError, setSttError] = useState<string | null>(null);
+  
   const [isSpeakingInput, setIsSpeakingInput] = useState(false);
   const [isSpeakingOutput, setIsSpeakingOutput] = useState(false);
+  
   const [browserSupportsSTT, setBrowserSupportsSTT] = useState(true);
   const [browserSupportsBrowserTTS, setBrowserSupportsBrowserTTS] = useState(true);
 
@@ -99,7 +101,7 @@ export default function QuickTranslator() {
           } else if (event.error === 'network') {
             errorMsg = "Network error with speech recognition. Please check your internet connection.";
           } else if (event.error === 'audio-capture') {
-            errorMsg = "Audio capture error. Please ensure your microphone is working and not in use by another app.";
+             errorMsg = "Audio capture error. Ensure your microphone is working and not in use by another app.";
           }
           setSttError(errorMsg);
           setIsListening(false);
@@ -109,7 +111,7 @@ export default function QuickTranslator() {
         setBrowserSupportsSTT(true);
       } else {
         console.warn("Speech Recognition API not supported by this browser.");
-        setSttError("Speech recognition is not supported by this browser.");
+        setSttError("Speech recognition (Mic icon) is not supported by this browser.");
         setBrowserSupportsSTT(false);
       }
 
@@ -135,7 +137,7 @@ export default function QuickTranslator() {
 
   const handleSwapLanguages = () => {
     setGlobalSourceLanguage(currentTargetLang);
-    setGlobalTargetLanguage(currentSourceLang);
+    setGlobalTargetLanguage(currentSourceLang); // Use currentSourceLang (which is from global)
     if (outputText.trim() !== '') {
       setInputText(outputText);
       setOutputText(inputText);
@@ -170,48 +172,47 @@ export default function QuickTranslator() {
   };
 
   const handleSpeak = async (text: string, lang: Language, type: 'input' | 'output') => {
-    if (!text.trim()) return;
+    if (!text.trim() || (type === 'input' && isSpeakingInput) || (type === 'output' && isSpeakingOutput)) return;
+
+    if (!browserSupportsBrowserTTS || !window.speechSynthesis) {
+      toast({ 
+        title: "TTS Not Available", 
+        description: "Browser-based speech synthesis is not supported on this device/browser.", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
     if (type === 'input') setIsSpeakingInput(true); else setIsSpeakingOutput(true);
 
     try {
-      // Try Google Cloud TTS via Genkit flow first
-      const result = await synthesizeSpeech({ text, language: lang });
-      if (result.audioBase64) {
-        const audio = new Audio(`data:audio/mp3;base64,${result.audioBase64}`);
-        audio.play();
-        audio.onended = () => {
-          if (type === 'input') setIsSpeakingInput(false); else setIsSpeakingOutput(false);
-        };
-        audio.onerror = (e) => {
-          console.error("Error playing Google Cloud TTS audio:", e);
-          toast({ title: "Audio Playback Error", description: "Could not play synthesized audio from Google Cloud.", variant: "destructive" });
-          if (type === 'input') setIsSpeakingInput(false); else setIsSpeakingOutput(false);
-          // Optionally, try browser fallback here too if Google audio fails to play
-        };
-        return;
+      window.speechSynthesis.cancel(); // Cancel any ongoing speech
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = languageToBcp47(lang);
+      
+      // Attempt to find a voice that matches the language more closely if possible
+      const voices = window.speechSynthesis.getVoices();
+      const specificVoice = voices.find(voice => voice.lang === utterance.lang) || 
+                            voices.find(voice => voice.lang.startsWith(utterance.lang.split('-')[0]));
+      if (specificVoice) {
+        utterance.voice = specificVoice;
       }
 
-      // Fallback to browser TTS if Google Cloud TTS didn't provide audio (e.g., unsupported lang)
-      if (browserSupportsBrowserTTS && window.speechSynthesis) {
-        console.log(`Falling back to browser TTS for ${lang}`);
-        window.speechSynthesis.cancel(); // Cancel any ongoing speech
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = languageToBcp47(lang);
-        utterance.onend = () => {
-          if (type === 'input') setIsSpeakingInput(false); else setIsSpeakingOutput(false);
-        };
-        utterance.onerror = (event) => {
-          console.error("Browser SpeechSynthesisUtterance error", event);
-          toast({ title: "Browser Speech Error", description: `Could not speak text using browser's TTS for ${lang}. Voice quality and availability depend on your browser and OS.`, variant: "destructive" });
-          if (type === 'input') setIsSpeakingInput(false); else setIsSpeakingOutput(false);
-        };
-        window.speechSynthesis.speak(utterance);
-      } else {
-        toast({ title: "TTS Not Available", description: `Speech synthesis is not available for ${lang} on this browser.`, variant: "destructive" });
+      utterance.onend = () => {
         if (type === 'input') setIsSpeakingInput(false); else setIsSpeakingOutput(false);
-      }
+      };
+      utterance.onerror = (event) => {
+        console.error("Browser SpeechSynthesisUtterance error", event);
+        toast({ 
+          title: "Browser Speech Error", 
+          description: `Could not speak text. Voice quality/availability for ${lang} depends on your browser/OS.`, 
+          variant: "destructive" 
+        });
+        if (type === 'input') setIsSpeakingInput(false); else setIsSpeakingOutput(false);
+      };
+      window.speechSynthesis.speak(utterance);
     } catch (e) {
-      console.error("Error in handleSpeak:", e);
+      console.error("Error in handleSpeak (Browser TTS):", e);
       toast({ title: "Speech Error", description: "An unexpected error occurred while trying to speak.", variant: "destructive" });
       if (type === 'input') setIsSpeakingInput(false); else setIsSpeakingOutput(false);
     }
@@ -219,7 +220,7 @@ export default function QuickTranslator() {
 
   const handleToggleListen = () => {
     if (!speechRecognition) {
-      setSttError("Speech recognition is not supported or enabled in your browser.");
+       setSttError("Speech recognition (Mic icon) is not supported or enabled in your browser.");
       return;
     }
     if (isListening) {
@@ -228,10 +229,10 @@ export default function QuickTranslator() {
       try {
         speechRecognition.lang = languageToBcp47(currentSourceLang);
         speechRecognition.start();
-        setSttError(null); // Clear previous errors
+        setSttError(null); 
       } catch (e) {
          console.error("Error starting speech recognition:", e);
-         setSttError("Could not start voice input. Check microphone permissions and ensure no other app is using it.");
+         setSttError("Could not start voice input. Check microphone permissions.");
          setIsListening(false);
       }
     }
@@ -246,7 +247,7 @@ export default function QuickTranslator() {
         </CardTitle>
         <CardDescription>
           Translate text. Use mic for voice input, speaker for text-to-speech.
-          <span className="block text-xs mt-1 text-muted-foreground">Google Cloud TTS for English/Tagalog; Browser TTS fallback for others.</span>
+          <span className="block text-xs mt-1 text-muted-foreground">Speech quality depends on your browser/OS.</span>
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -256,7 +257,7 @@ export default function QuickTranslator() {
             <Select
               value={currentSourceLang}
               onValueChange={(value) => { if (mounted) setGlobalSourceLanguage(value as Language)}}
-              disabled={!mounted}
+              disabled={!mounted || isLoadingTranslation || isSpeakingInput || isSpeakingOutput || isListening}
             >
               <SelectTrigger id="quick-source-language" className="w-full">
                 <SelectValue placeholder="Select source language" />
@@ -271,7 +272,7 @@ export default function QuickTranslator() {
             </Select>
           </div>
           <div className="self-center pt-0 sm:pt-5">
-            <Button variant="ghost" size="icon" onClick={handleSwapLanguages} aria-label="Swap languages" disabled={!mounted}>
+            <Button variant="ghost" size="icon" onClick={handleSwapLanguages} aria-label="Swap languages" disabled={!mounted || isLoadingTranslation || isSpeakingInput || isSpeakingOutput || isListening}>
               <ArrowRightLeft className="h-5 w-5" />
             </Button>
           </div>
@@ -280,7 +281,7 @@ export default function QuickTranslator() {
             <Select
               value={currentTargetLang}
               onValueChange={(value) => { if (mounted) setGlobalTargetLanguage(value as Language)}}
-              disabled={!mounted}
+              disabled={!mounted || isLoadingTranslation || isSpeakingInput || isSpeakingOutput || isListening}
             >
               <SelectTrigger id="quick-target-language" className="w-full">
                 <SelectValue placeholder="Select target language" />
@@ -304,7 +305,7 @@ export default function QuickTranslator() {
             rows={4}
             className="resize-none text-base p-3 rounded-md shadow-sm focus:ring-primary focus:border-primary pr-20"
             aria-label={`Input text in ${currentSourceLang}`}
-            disabled={!mounted || isLoadingTranslation}
+            disabled={!mounted || isLoadingTranslation || isSpeakingInput || isSpeakingOutput || isListening}
           />
           <div className="absolute top-2 right-2 flex flex-col space-y-1">
             <Button
@@ -321,7 +322,7 @@ export default function QuickTranslator() {
               variant="ghost"
               size="icon"
               onClick={() => handleSpeak(inputText, currentSourceLang, 'input')}
-              disabled={!mounted || !inputText.trim() || isLoadingTranslation || isSpeakingInput || isSpeakingOutput}
+              disabled={!mounted || !inputText.trim() || isLoadingTranslation || isSpeakingInput || isSpeakingOutput || isListening}
               className="h-8 w-8 p-1.5 hover:bg-accent"
               aria-label={`Speak input text in ${currentSourceLang}`}
             >
@@ -347,7 +348,7 @@ export default function QuickTranslator() {
                 variant="ghost"
                 size="icon"
                 onClick={() => handleSpeak(outputText, currentTargetLang, 'output')}
-                disabled={!mounted || !outputText.trim() || isLoadingTranslation || isSpeakingInput || isSpeakingOutput}
+                disabled={!mounted || !outputText.trim() || isLoadingTranslation || isSpeakingInput || isSpeakingOutput || isListening}
                 className="h-8 w-8 p-1.5 hover:bg-accent"
                 aria-label={`Speak translated text in ${currentTargetLang}`}
             >
@@ -358,7 +359,7 @@ export default function QuickTranslator() {
 
         <Button
           onClick={handleTranslate}
-          disabled={isLoadingTranslation || !inputText.trim() || !mounted || isSpeakingInput || isSpeakingOutput}
+          disabled={isLoadingTranslation || !inputText.trim() || !mounted || isSpeakingInput || isSpeakingOutput || isListening}
           className="w-full py-2.5 text-base font-semibold"
           size="lg"
         >
@@ -371,8 +372,9 @@ export default function QuickTranslator() {
         </Button>
 
         {translationError && <p className="text-sm text-destructive text-center">{translationError}</p>}
-        {!browserSupportsBrowserTTS && mounted && <p className="text-xs text-amber-600 text-center -mt-4 px-1 flex items-center justify-center gap-1"><AlertTriangle size={14}/> Browser TTS fallback not supported.</p>}
+        {!browserSupportsBrowserTTS && mounted && <p className="text-xs text-amber-600 text-center -mt-4 px-1 flex items-center justify-center gap-1"><AlertTriangle size={14}/> Browser TTS (Speaker icon) not supported.</p>}
       </CardContent>
     </Card>
   );
 }
+
