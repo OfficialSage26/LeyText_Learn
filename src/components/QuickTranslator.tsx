@@ -38,7 +38,7 @@ const languageToBcp47 = (lang: Language): string => {
   switch (lang) {
     case "English": return "en-US";
     case "Tagalog": return "tl-PH";
-    case "Bisaya": return "ceb-PH";
+    case "Bisaya": return "ceb-PH"; // Cebuano is a common Bisayan language
     case "Waray-Waray": return "war-PH";
     default: return "en-US";
   }
@@ -54,6 +54,7 @@ export default function QuickTranslator() {
   const { toast } = useToast();
   const mounted = useMounted();
 
+  // Local state for UI display, initialized to server-consistent defaults
   const [currentSourceLang, setCurrentSourceLang] = useState<Language>(SUPPORTED_LANGUAGES[0]);
   const [currentTargetLang, setCurrentTargetLang] = useState<Language>(SUPPORTED_LANGUAGES[1]);
 
@@ -121,12 +122,13 @@ export default function QuickTranslator() {
     }
   }, [mounted, globalSourceLanguage, globalTargetLanguage]);
 
+  // Effect to ensure global source and target languages are different
   useEffect(() => {
     if (mounted) {
       if (globalSourceLanguage === globalTargetLanguage) {
         const newTarget = SUPPORTED_LANGUAGES.find(l => l !== globalSourceLanguage) ||
-                           (globalSourceLanguage === SUPPORTED_LANGUAGES[0] ? SUPPORTED_LANGUAGES[1] : SUPPORTED_LANGUAGES[0]) ||
-                           SUPPORTED_LANGUAGES[1]; 
+                           (globalSourceLanguage === SUPPORTED_LANGUAGES[0] ? SUPPORTED_LANGUAGES[1] : SUPPORTED_LANGUAGES[0]) || 
+                           SUPPORTED_LANGUAGES[1]; // Absolute fallback
         if (newTarget && newTarget !== globalTargetLanguage) {
           setGlobalTargetLanguage(newTarget);
         }
@@ -134,14 +136,16 @@ export default function QuickTranslator() {
     }
   }, [mounted, globalSourceLanguage, globalTargetLanguage, setGlobalTargetLanguage]);
 
+
   const handleSwapLanguages = () => {
-    const oldSource = currentSourceLang;
-    const oldTarget = currentTargetLang;
+    // Directly update global context for immediate effect
+    const oldSource = globalSourceLanguage;
+    const oldTarget = globalTargetLanguage;
     setGlobalSourceLanguage(oldTarget); 
     setGlobalTargetLanguage(oldSource);
-    setCurrentSourceLang(oldTarget);
-    setCurrentTargetLang(oldSource);
 
+    // Local display state will be updated by its own useEffect hook listening to global changes
+    // Swap text fields if output has content
     if (outputText.trim() !== '') {
         setInputText(outputText);
         setOutputText(inputText);
@@ -153,6 +157,7 @@ export default function QuickTranslator() {
       setOutputText('');
       return;
     }
+    // Use current display languages for the actual translation logic, which are synced with global
     if (currentSourceLang === currentTargetLang) {
       setOutputText(inputText);
       return;
@@ -163,8 +168,8 @@ export default function QuickTranslator() {
     try {
       const result = await translateText({
         text: inputText,
-        sourceLanguage: currentSourceLang,
-        targetLanguage: currentTargetLang,
+        sourceLanguage: currentSourceLang, // Use current display state for API
+        targetLanguage: currentTargetLang, // Use current display state for API
       });
       setOutputText(result.translatedText);
     } catch (e) {
@@ -182,14 +187,20 @@ export default function QuickTranslator() {
 
   const playBase64Audio = (base64Audio: string, type: 'input' | 'output') => {
     const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
-    audio.play()
-      .catch(err => {
-        console.error("Error playing base64 audio:", err);
+    const currentSpeakingSetter = type === 'input' ? setIsSpeakingInput : setIsSpeakingOutput;
+    
+    audio.onended = () => currentSpeakingSetter(false);
+    audio.onerror = (err) => {
+      console.error("Error playing base64 audio:", err);
+      toast({ title: "Audio Playback Error", description: "Could not play synthesized audio.", variant: "destructive" });
+      currentSpeakingSetter(false);
+    };
+    
+    audio.play().catch(err => {
+        console.error("Error initiating base64 audio playback:", err);
         toast({ title: "Audio Playback Error", description: "Could not play synthesized audio.", variant: "destructive" });
-      })
-      .finally(() => {
-        if (type === 'input') setIsSpeakingInput(false); else setIsSpeakingOutput(false);
-      });
+        currentSpeakingSetter(false);
+    });
   };
 
   const speakWithBrowserTTS = (text: string, lang: Language, type: 'input' | 'output') => {
@@ -203,6 +214,7 @@ export default function QuickTranslator() {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = languageToBcp47(lang);
     
+    // Attempt to find a voice specific to the language code
     const voices = window.speechSynthesis.getVoices();
     const specificVoice = voices.find(voice => voice.lang === utterance.lang) || 
                           voices.find(voice => voice.lang.startsWith(utterance.lang.split('-')[0]));
@@ -223,22 +235,27 @@ export default function QuickTranslator() {
 
   const handleSpeak = async (text: string, lang: Language, type: 'input' | 'output') => {
     if (!text.trim()) return;
-    if (type === 'input' && isSpeakingInput) { window.speechSynthesis.cancel(); setIsSpeakingInput(false); return; }
-    if (type === 'output' && isSpeakingOutput) { window.speechSynthesis.cancel(); setIsSpeakingOutput(false); return; }
+    
+    const currentSpeakingState = type === 'input' ? isSpeakingInput : isSpeakingOutput;
+    const currentSpeakingSetter = type === 'input' ? setIsSpeakingInput : setIsSpeakingOutput;
 
-    if (type === 'input') setIsSpeakingInput(true); else setIsSpeakingOutput(true);
+    if (currentSpeakingState) { 
+      window.speechSynthesis.cancel(); // Stop browser TTS if it's speaking
+      currentSpeakingSetter(false); 
+      return; 
+    }
+
+    currentSpeakingSetter(true);
 
     try {
-      // Attempt to use Genkit flow (which tries Google Cloud TTS, currently only for Tagalog)
-      const { audioBase64 } = await synthesizeSpeech({ text, language: lang });
+      const { audioBase64, source: ttsSource } = await synthesizeSpeech({ text, language: lang });
 
       if (audioBase64) {
         playBase64Audio(audioBase64, type);
-      } else {
-        // Fallback to browser TTS if Genkit flow doesn't provide audio
+      } else if (ttsSource === 'browser' || ttsSource === 'none') {
         let toastMessage = `Using browser's default voice for ${lang}. Quality may vary.`;
-        if (lang === "Tagalog") {
-          toastMessage = `Premium Filipino voice not available, using browser's default voice for Tagalog. Quality may vary.`;
+        if (lang === "Tagalog" && ttsSource === 'browser') { // Only show this specific Tagalog message if explicitly told it's a browser fallback
+          toastMessage = `Premium Filipino voice not available or configured, using browser's default voice for Tagalog. Quality may vary.`;
         }
         toast({
           title: "TTS Notice",
@@ -246,11 +263,15 @@ export default function QuickTranslator() {
           variant: "default" 
         });
         speakWithBrowserTTS(text, lang, type);
+      } else {
+        // Should not happen if flow returns 'browser' or 'none' when audioBase64 is null
+        toast({ title: "TTS Error", description: `Could not get audio for ${lang}.`, variant: "destructive" });
+        currentSpeakingSetter(false);
       }
     } catch (error) {
       console.error("Error calling synthesizeSpeech flow or playing audio:", error);
       toast({ title: "Speech Error", description: `Could not synthesize or play speech for ${lang}. Falling back to browser TTS.`, variant: "destructive" });
-      speakWithBrowserTTS(text, lang, type); 
+      speakWithBrowserTTS(text, lang, type); // Fallback
     }
   };
 
@@ -266,9 +287,9 @@ export default function QuickTranslator() {
         speechRecognition.lang = languageToBcp47(currentSourceLang);
         speechRecognition.start();
         setSttError(null); 
-      } catch (e) {
+      } catch (e: any) {
          console.error("Error starting speech recognition:", e);
-         setSttError("Could not start voice input. Check microphone permissions and ensure it's not in use.");
+         setSttError(`Could not start voice input: ${e.message || "Check microphone permissions."}`);
          setIsListening(false);
       }
     }
@@ -297,7 +318,7 @@ export default function QuickTranslator() {
         </CardTitle>
         <CardDescription>
           Translate text. Use mic for voice input, speaker for text-to-speech.
-          <span className="block text-xs mt-1 text-muted-foreground">Speech quality depends on your browser/OS or cloud service availability.</span>
+          <span className="block text-xs mt-1 text-muted-foreground">Speech quality depends on API configuration, browser/OS, or cloud service availability.</span>
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -305,8 +326,8 @@ export default function QuickTranslator() {
           <div className="flex-1 w-full">
             <Label htmlFor="quick-source-language" className="mb-1 block text-sm font-medium">From</Label>
             <Select
-              value={currentSourceLang}
-              onValueChange={(value) => { if (mounted) setGlobalSourceLanguage(value as Language)}}
+              value={currentSourceLang} // Use local state for display
+              onValueChange={(value) => { if (mounted) setGlobalSourceLanguage(value as Language)}} // Update global context
               disabled={!mounted || isLoadingTranslation || isSpeakingInput || isSpeakingOutput || isListening}
             >
               <SelectTrigger id="quick-source-language" className="w-full">
@@ -331,8 +352,8 @@ export default function QuickTranslator() {
           <div className="flex-1 w-full">
             <Label htmlFor="quick-target-language" className="mb-1 block text-sm font-medium">To</Label>
             <Select
-              value={currentTargetLang}
-              onValueChange={(value) => { if (mounted) setGlobalTargetLanguage(value as Language)}}
+              value={currentTargetLang} // Use local state for display
+              onValueChange={(value) => { if (mounted) setGlobalTargetLanguage(value as Language)}} // Update global context
               disabled={!mounted || isLoadingTranslation || isSpeakingInput || isSpeakingOutput || isListening}
             >
               <SelectTrigger id="quick-target-language" className="w-full">
@@ -428,4 +449,3 @@ export default function QuickTranslator() {
     </Card>
   );
 }
-
