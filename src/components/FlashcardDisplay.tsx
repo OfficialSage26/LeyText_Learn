@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -72,7 +73,7 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
         onClick={() => setIsFlipped(!isFlipped)}
         role="button"
         tabIndex={0}
-        aria-label={`Flashcard for ${currentWord.word}. Click to flip.`}
+        aria-label={`Flashcard: ${currentWord.word}. ${isFlipped ? `Meaning: ${currentWord.meaning}` : 'Tap to see meaning.'}`}
         onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setIsFlipped(!isFlipped)}
       >
         {/* Front of the card */}
@@ -86,19 +87,24 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
                   "text-muted-foreground text-sm transition-opacity duration-300",
                   showPronunciation ? "opacity-100" : "opacity-0"
                 )}
+                aria-hidden={!showPronunciation}
               >
                 {currentWord.pronunciation}
               </p>
             )}
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="mt-4 text-xs"
-              onClick={(e) => { e.stopPropagation(); setShowPronunciation(!showPronunciation); }}
-              aria-pressed={showPronunciation}
-            >
-              {showPronunciation ? "Hide" : "Show"} Pronunciation
-            </Button>
+            {currentWord.pronunciation && (
+                <Button 
+                variant="ghost" 
+                size="sm" 
+                className="mt-4 text-xs"
+                onClick={(e) => { e.stopPropagation(); setShowPronunciation(!showPronunciation); }}
+                aria-pressed={showPronunciation}
+                aria-controls="pronunciation-display"
+                >
+                {showPronunciation ? "Hide" : "Show"} Pronunciation
+                </Button>
+            )}
+            {currentWord.pronunciation && <span id="pronunciation-display" className="sr-only">{currentWord.pronunciation}</span>}
           </CardContent>
         </Card>
 
@@ -131,8 +137,8 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
         <Button variant="outline" onClick={handlePrev} aria-label="Previous card">
           <ArrowLeft className="mr-2 h-4 w-4" /> Prev
         </Button>
-        <p className="text-sm text-muted-foreground">
-          {currentIndex % shuffledWords.length + 1} / {shuffledWords.length}
+        <p className="text-sm text-muted-foreground" aria-live="polite">
+          Card {shuffledWords.length > 0 ? (currentIndex % shuffledWords.length) + 1 : 0} of {shuffledWords.length}
         </p>
         <Button variant="outline" onClick={handleNext} aria-label="Next card">
           Next <ArrowRight className="ml-2 h-4 w-4" />

@@ -147,7 +147,7 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
               </p>
             )}
             {greetings.map((greeting, index) => (
-              <Card key={greeting.id /* Use original WordEntry ID if available, or generate one if transformed significantly */} className="p-4 shadow-sm">
+              <Card key={greeting.id} className="p-4 shadow-sm">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                   <div>
                     <h3 className="text-xl font-semibold text-primary">{greeting.word}</h3>
@@ -159,6 +159,7 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
                     onClick={() => handleGetAIExamples(index)}
                     disabled={greeting.isLoadingExamples}
                     className="mt-2 sm:mt-0"
+                    aria-label={`Get AI example sentences for ${greeting.word}`}
                   >
                     {greeting.isLoadingExamples ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -169,7 +170,7 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
                   </Button>
                 </div>
                 {greeting.aiExamples && greeting.aiExamples.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-dashed">
+                  <div className="mt-3 pt-3 border-t border-dashed" aria-live="polite">
                     <h4 className="text-sm font-medium mb-1">Example Sentences (in {greeting.language}):</h4>
                     <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
                       {greeting.aiExamples.map((ex, i) => <li key={i}><em>{ex}</em></li>)}
@@ -193,4 +194,3 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
     </AppLayout>
   );
 }
-

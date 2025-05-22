@@ -14,7 +14,7 @@ export default function HomePage() {
       <div className="flex flex-col items-center justify-center text-center space-y-8 py-10">
         <Image 
           src="https://placehold.co/200x200.png" 
-          alt="LeyText Learn App Icon" 
+          alt="LeyText Learn App Icon - a stylized representation of language and learning." 
           width={150} 
           height={150} 
           className="rounded-2xl shadow-lg"

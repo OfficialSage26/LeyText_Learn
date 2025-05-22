@@ -28,7 +28,7 @@ export default function PracticeChallengesPage() {
           <CardContent className="text-center">
             <Image 
               src="https://placehold.co/800x400.png" 
-              alt="Practice Challenges Illustration" 
+              alt="Illustration of game elements like puzzles or achievement badges, representing practice challenges." 
               width={800} 
               height={400} 
               className="rounded-lg shadow-md mx-auto mb-6"

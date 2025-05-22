@@ -16,6 +16,7 @@ const learningSections = [
     icon: Map,
     href: "/learn/path",
     imageSrc: "https://placehold.co/600x400.png",
+    altText: "Illustration of a winding path or map representing a learning journey.",
     dataAiHint: "map journey",
     cta: "Start Path",
   },
@@ -25,6 +26,7 @@ const learningSections = [
     icon: BookOpen,
     href: "/learn/topics",
     imageSrc: "https://placehold.co/600x400.png",
+    altText: "Illustration of open books or a library setting, symbolizing topic exploration.",
     dataAiHint: "books library",
     cta: "Browse Topics",
   },
@@ -34,6 +36,7 @@ const learningSections = [
     icon: Zap,
     href: "/learn/challenges",
     imageSrc: "https://placehold.co/600x400.png",
+    altText: "Illustration of a game controller or puzzle pieces, representing practice challenges.",
     dataAiHint: "game controller",
     cta: "Take a Challenge",
   }
@@ -59,7 +62,7 @@ export default function LearnPage() {
             <div className="relative w-full h-48">
               <Image 
                 src={section.imageSrc} 
-                alt={section.title} 
+                alt={section.altText}
                 layout="fill" 
                 objectFit="cover" 
                 data-ai-hint={section.dataAiHint}
@@ -87,7 +90,7 @@ export default function LearnPage() {
           <div className="flex-shrink-0">
             <Image 
               src="https://placehold.co/150x150.png" 
-              alt="LeyText Learn mascot" 
+              alt="LeyText Learn mascot, an owl with a book." 
               width={150} 
               height={150} 
               className="rounded-lg shadow-md"
