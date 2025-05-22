@@ -11,6 +11,7 @@ import { ArrowRightLeft, Languages, Loader2, Mic, Volume2, X, AlertTriangle } fr
 import { useGlobalAppContext } from '@/hooks/useGlobalAppContext';
 import { SUPPORTED_LANGUAGES, type Language } from '@/types';
 import { translateText } from '@/ai/flows/translate-text-flow';
+import { synthesizeSpeech } from '@/ai/flows/synthesize-speech-flow'; // Import the Genkit flow
 import { useToast } from "@/hooks/use-toast";
 import { useMounted } from '@/hooks/useMounted';
 import { cn } from '@/lib/utils';
@@ -34,7 +35,7 @@ declare global {
   }
 }
 
-// BCP 47 language codes for Web Speech API (STT and TTS)
+// BCP 47 language codes for Web Speech API (STT and browser TTS)
 const languageToBcp47 = (lang: Language): string => {
   switch (lang) {
     case "English": return "en-US";
@@ -55,7 +56,6 @@ export default function QuickTranslator() {
   const { toast } = useToast();
   const mounted = useMounted();
 
-  // Local state for UI display, initialized to server-consistent defaults
   const [currentSourceLang, setCurrentSourceLang] = useState<Language>(SUPPORTED_LANGUAGES[0]);
   const [currentTargetLang, setCurrentTargetLang] = useState<Language>(SUPPORTED_LANGUAGES[1]);
 
@@ -74,8 +74,6 @@ export default function QuickTranslator() {
   const [browserSupportsSTT, setBrowserSupportsSTT] = useState(true);
   const [browserSupportsBrowserTTS, setBrowserSupportsBrowserTTS] = useState(true);
 
-
-  // Sync local UI languages with global context after mount and on global changes
   useEffect(() => {
     if (mounted) {
       setCurrentSourceLang(globalSourceLanguage);
@@ -125,14 +123,12 @@ export default function QuickTranslator() {
     }
   }, [mounted, globalSourceLanguage, globalTargetLanguage]);
 
-
-  // Effect to ensure global source and target languages are different
   useEffect(() => {
     if (mounted) {
       if (globalSourceLanguage === globalTargetLanguage) {
         const newTarget = SUPPORTED_LANGUAGES.find(l => l !== globalSourceLanguage) ||
-                           (globalSourceLanguage === SUPPORTED_LANGUAGES[0] ? SUPPORTED_LANGUAGES[1] : SUPPORTED_LANGUAGES[0]) || // Ensure it's different
-                           SUPPORTED_LANGUAGES[1]; // Absolute fallback
+                           (globalSourceLanguage === SUPPORTED_LANGUAGES[0] ? SUPPORTED_LANGUAGES[1] : SUPPORTED_LANGUAGES[0]) ||
+                           SUPPORTED_LANGUAGES[1]; 
         if (newTarget && newTarget !== globalTargetLanguage) {
           setGlobalTargetLanguage(newTarget);
         }
@@ -140,9 +136,7 @@ export default function QuickTranslator() {
     }
   }, [mounted, globalSourceLanguage, globalTargetLanguage, setGlobalTargetLanguage]);
 
-
   const handleSwapLanguages = () => {
-    // Directly use and update global context state
     setGlobalSourceLanguage(globalTargetLanguage); 
     setGlobalTargetLanguage(globalSourceLanguage); 
 
@@ -157,7 +151,6 @@ export default function QuickTranslator() {
       setOutputText('');
       return;
     }
-    // Use global languages for the actual translation logic
     if (globalSourceLanguage === globalTargetLanguage) {
       setOutputText(inputText);
       return;
@@ -168,8 +161,8 @@ export default function QuickTranslator() {
     try {
       const result = await translateText({
         text: inputText,
-        sourceLanguage: globalSourceLanguage, // Use global context for API
-        targetLanguage: globalTargetLanguage, // Use global context for API
+        sourceLanguage: globalSourceLanguage,
+        targetLanguage: globalTargetLanguage,
       });
       setOutputText(result.translatedText);
     } catch (e) {
@@ -185,81 +178,100 @@ export default function QuickTranslator() {
     }
   };
 
-
-  const handleSpeak = async (text: string, lang: Language, type: 'input' | 'output') => {
-    if (!text.trim() || (type === 'input' && isSpeakingInput) || (type === 'output' && isSpeakingOutput)) return;
-
-    if (!browserSupportsBrowserTTS || !window.speechSynthesis) {
-      toast({ 
-        title: "TTS Not Available", 
-        description: "Browser-based speech synthesis is not supported on this device/browser.", 
-        variant: "destructive" 
+  const playBase64Audio = (base64Audio: string) => {
+    const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
+    audio.play()
+      .catch(err => {
+        console.error("Error playing base64 audio:", err);
+        toast({ title: "Audio Playback Error", description: "Could not play synthesized audio.", variant: "destructive" });
+      })
+      .finally(() => {
+        setIsSpeakingInput(false);
+        setIsSpeakingOutput(false);
       });
+  };
+
+  const speakWithBrowserTTS = (text: string, lang: Language, type: 'input' | 'output') => {
+    if (!browserSupportsBrowserTTS || !window.speechSynthesis) {
+      toast({ title: "TTS Not Available", description: "Browser-based speech synthesis is not supported.", variant: "destructive" });
+      if (type === 'input') setIsSpeakingInput(false); else setIsSpeakingOutput(false);
       return;
     }
+    
+    window.speechSynthesis.cancel(); 
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = languageToBcp47(lang);
+    
+    const voices = window.speechSynthesis.getVoices();
+    const specificVoice = voices.find(voice => voice.lang === utterance.lang) || 
+                          voices.find(voice => voice.lang.startsWith(utterance.lang.split('-')[0]));
+    if (specificVoice) {
+      utterance.voice = specificVoice;
+    }
+
+    utterance.onend = () => {
+      if (type === 'input') setIsSpeakingInput(false); else setIsSpeakingOutput(false);
+    };
+    utterance.onerror = (event) => {
+      console.error("Browser SpeechSynthesisUtterance error", event);
+      toast({ title: "Browser Speech Error", description: `Could not speak text. Voice quality/availability for ${lang} depends on your browser/OS. Some dialects may not be accurately represented.`, variant: "destructive" });
+      if (type === 'input') setIsSpeakingInput(false); else setIsSpeakingOutput(false);
+    };
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const handleSpeak = async (text: string, lang: Language, type: 'input' | 'output') => {
+    if (!text.trim()) return;
+    if (type === 'input' && isSpeakingInput) return;
+    if (type === 'output' && isSpeakingOutput) return;
 
     if (type === 'input') setIsSpeakingInput(true); else setIsSpeakingOutput(true);
 
     try {
-      window.speechSynthesis.cancel(); // Cancel any ongoing speech
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = languageToBcp47(lang);
-      
-      // Attempt to find a voice that matches the language more closely if possible
-      const voices = window.speechSynthesis.getVoices();
-      const specificVoice = voices.find(voice => voice.lang === utterance.lang) || 
-                            voices.find(voice => voice.lang.startsWith(utterance.lang.split('-')[0]));
-      if (specificVoice) {
-        utterance.voice = specificVoice;
-      }
+      const { audioBase64 } = await synthesizeSpeech({ text, language: lang });
 
-      utterance.onend = () => {
-        if (type === 'input') setIsSpeakingInput(false); else setIsSpeakingOutput(false);
-      };
-      utterance.onerror = (event) => {
-        console.error("Browser SpeechSynthesisUtterance error", event);
-        toast({ 
-          title: "Browser Speech Error", 
-          description: `Could not speak text. Voice quality/availability for ${lang} depends on your browser/OS. Some dialects may not be accurately represented.`, 
-          variant: "destructive" 
+      if (audioBase64) {
+        playBase64Audio(audioBase64);
+      } else {
+        // Fallback to browser TTS if Google Cloud TTS not available for the language or fails
+        toast({
+          title: "TTS Notice",
+          description: `High-quality TTS for ${lang} may not be available. Using browser's default voice.`,
+          variant: "default" 
         });
-        if (type === 'input') setIsSpeakingInput(false); else setIsSpeakingOutput(false);
-      };
-      window.speechSynthesis.speak(utterance);
-    } catch (e) {
-      console.error("Error in handleSpeak (Browser TTS):", e);
-      toast({ title: "Speech Error", description: "An unexpected error occurred while trying to speak.", variant: "destructive" });
-      if (type === 'input') setIsSpeakingInput(false); else setIsSpeakingOutput(false);
+        speakWithBrowserTTS(text, lang, type);
+      }
+    } catch (error) {
+      console.error("Error calling synthesizeSpeech flow or playing audio:", error);
+      toast({ title: "Speech Error", description: "Could not synthesize or play speech. Falling back to browser TTS.", variant: "destructive" });
+      speakWithBrowserTTS(text, lang, type); // Attempt fallback on general error too
     }
   };
-
 
   const handleToggleListen = () => {
     if (!speechRecognition) {
        setSttError("Speech recognition (Mic icon) is not supported or enabled in your browser.");
-      return;
+       return;
     }
     if (isListening) {
       speechRecognition.stop();
     } else {
       try {
-        speechRecognition.lang = languageToBcp47(currentSourceLang); // Use currentSourceLang for STT
+        speechRecognition.lang = languageToBcp47(currentSourceLang);
         speechRecognition.start();
-        setSttError(null); // Clear previous errors
+        setSttError(null); 
       } catch (e) {
          console.error("Error starting speech recognition:", e);
          setSttError("Could not start voice input. Check microphone permissions and ensure it's not in use.");
-         setIsListening(false); // Ensure isListening is false if start fails
+         setIsListening(false);
       }
     }
   };
 
-  // Render placeholders if not mounted to avoid hydration mismatch
   const sourcePlaceholder = mounted ? `Enter text in ${currentSourceLang}... (or use microphone)` : "Loading languages...";
   const targetPlaceholder = mounted ? `Translation in ${currentTargetLang} will appear here...` : "Loading languages...";
   const sourceAriaLabel = mounted ? `Input text in ${currentSourceLang}` : "Input text area";
   const targetAriaLabel = mounted ? `Output text in ${currentTargetLang}` : "Output text area";
-
 
   return (
     <Card className="shadow-lg w-full">
@@ -270,7 +282,7 @@ export default function QuickTranslator() {
         </CardTitle>
         <CardDescription>
           Translate text. Use mic for voice input, speaker for text-to-speech.
-          <span className="block text-xs mt-1 text-muted-foreground">Speech quality depends on your browser/OS.</span>
+          <span className="block text-xs mt-1 text-muted-foreground">Speech quality depends on your browser/OS or cloud service availability.</span>
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -278,8 +290,8 @@ export default function QuickTranslator() {
           <div className="flex-1 w-full">
             <Label htmlFor="quick-source-language" className="mb-1 block text-sm font-medium">From</Label>
             <Select
-              value={currentSourceLang} // Use local state for display
-              onValueChange={(value) => { if (mounted) setGlobalSourceLanguage(value as Language)}} // Update global context
+              value={currentSourceLang}
+              onValueChange={(value) => { if (mounted) setGlobalSourceLanguage(value as Language)}}
               disabled={!mounted || isLoadingTranslation || isSpeakingInput || isSpeakingOutput || isListening}
             >
               <SelectTrigger id="quick-source-language" className="w-full">
@@ -304,8 +316,8 @@ export default function QuickTranslator() {
           <div className="flex-1 w-full">
             <Label htmlFor="quick-target-language" className="mb-1 block text-sm font-medium">To</Label>
             <Select
-              value={currentTargetLang} // Use local state for display
-              onValueChange={(value) => { if (mounted) setGlobalTargetLanguage(value as Language)}} // Update global context
+              value={currentTargetLang}
+              onValueChange={(value) => { if (mounted) setGlobalTargetLanguage(value as Language)}}
               disabled={!mounted || isLoadingTranslation || isSpeakingInput || isSpeakingOutput || isListening}
             >
               <SelectTrigger id="quick-target-language" className="w-full">
@@ -357,7 +369,6 @@ export default function QuickTranslator() {
         </div>
          {sttError && <p className="text-xs text-destructive text-center mt-1 px-1 flex items-center justify-center gap-1"><AlertTriangle size={14}/> {sttError}</p>}
          {!browserSupportsSTT && mounted && <p className="text-xs text-amber-600 text-center mt-1 px-1 flex items-center justify-center gap-1"><AlertTriangle size={14}/> STT (Mic) not supported by this browser.</p>}
-
 
         <div className="relative">
             <Textarea
