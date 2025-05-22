@@ -11,7 +11,6 @@ import { ArrowRightLeft, Languages, Loader2, Mic, Volume2, X, AlertTriangle } fr
 import { useGlobalAppContext } from '@/hooks/useGlobalAppContext';
 import { SUPPORTED_LANGUAGES, type Language } from '@/types';
 import { translateText } from '@/ai/flows/translate-text-flow';
-// Removed: import { synthesizeSpeech } from '@/ai/flows/synthesize-speech-flow';
 import { useToast } from "@/hooks/use-toast";
 import { useMounted } from '@/hooks/useMounted';
 import { cn } from '@/lib/utils';
@@ -56,6 +55,7 @@ export default function QuickTranslator() {
   const { toast } = useToast();
   const mounted = useMounted();
 
+  // Local state for UI display, initialized to server-consistent defaults
   const [currentSourceLang, setCurrentSourceLang] = useState<Language>(SUPPORTED_LANGUAGES[0]);
   const [currentTargetLang, setCurrentTargetLang] = useState<Language>(SUPPORTED_LANGUAGES[1]);
 
@@ -75,6 +75,7 @@ export default function QuickTranslator() {
   const [browserSupportsBrowserTTS, setBrowserSupportsBrowserTTS] = useState(true);
 
 
+  // Sync local UI languages with global context after mount and on global changes
   useEffect(() => {
     if (mounted) {
       setCurrentSourceLang(globalSourceLanguage);
@@ -84,7 +85,7 @@ export default function QuickTranslator() {
       if (SpeechRecognitionAPI) {
         const recognitionInstance = new SpeechRecognitionAPI() as SpeechRecognition;
         recognitionInstance.continuous = false;
-        recognitionInstance.interimResults = true;
+        recognitionInstance.interimResults = true; 
         recognitionInstance.onstart = () => setIsListening(true);
         recognitionInstance.onresult = (event: any) => {
           let transcript = '';
@@ -124,23 +125,30 @@ export default function QuickTranslator() {
     }
   }, [mounted, globalSourceLanguage, globalTargetLanguage]);
 
+
+  // Effect to ensure global source and target languages are different
   useEffect(() => {
     if (mounted) {
       if (globalSourceLanguage === globalTargetLanguage) {
         const newTarget = SUPPORTED_LANGUAGES.find(l => l !== globalSourceLanguage) ||
-                           (globalSourceLanguage === SUPPORTED_LANGUAGES[0] ? SUPPORTED_LANGUAGES[1] : SUPPORTED_LANGUAGES[0]) ||
-                           SUPPORTED_LANGUAGES[1];
-        if (newTarget && newTarget !== globalTargetLanguage) setGlobalTargetLanguage(newTarget);
+                           (globalSourceLanguage === SUPPORTED_LANGUAGES[0] ? SUPPORTED_LANGUAGES[1] : SUPPORTED_LANGUAGES[0]) || // Ensure it's different
+                           SUPPORTED_LANGUAGES[1]; // Absolute fallback
+        if (newTarget && newTarget !== globalTargetLanguage) {
+          setGlobalTargetLanguage(newTarget);
+        }
       }
     }
   }, [mounted, globalSourceLanguage, globalTargetLanguage, setGlobalTargetLanguage]);
 
+
   const handleSwapLanguages = () => {
-    setGlobalSourceLanguage(currentTargetLang);
-    setGlobalTargetLanguage(currentSourceLang); // Use currentSourceLang (which is from global)
+    // Directly use and update global context state
+    setGlobalSourceLanguage(globalTargetLanguage); 
+    setGlobalTargetLanguage(globalSourceLanguage); 
+
     if (outputText.trim() !== '') {
-      setInputText(outputText);
-      setOutputText(inputText);
+        setInputText(outputText);
+        setOutputText(inputText);
     }
   };
 
@@ -149,27 +157,34 @@ export default function QuickTranslator() {
       setOutputText('');
       return;
     }
+    // Use global languages for the actual translation logic
     if (globalSourceLanguage === globalTargetLanguage) {
       setOutputText(inputText);
       return;
     }
+
     setIsLoadingTranslation(true);
     setTranslationError(null);
     try {
       const result = await translateText({
         text: inputText,
-        sourceLanguage: globalSourceLanguage,
-        targetLanguage: globalTargetLanguage,
+        sourceLanguage: globalSourceLanguage, // Use global context for API
+        targetLanguage: globalTargetLanguage, // Use global context for API
       });
       setOutputText(result.translatedText);
     } catch (e) {
       console.error("Translation error:", e);
       setTranslationError("Failed to translate text. Please try again.");
-      toast({ title: "Translation Error", description: "Could not translate text.", variant: "destructive" });
+      toast({
+        title: "Translation Error",
+        description: "Could not translate the text. Please check your connection or try again later.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoadingTranslation(false);
     }
   };
+
 
   const handleSpeak = async (text: string, lang: Language, type: 'input' | 'output') => {
     if (!text.trim() || (type === 'input' && isSpeakingInput) || (type === 'output' && isSpeakingOutput)) return;
@@ -205,7 +220,7 @@ export default function QuickTranslator() {
         console.error("Browser SpeechSynthesisUtterance error", event);
         toast({ 
           title: "Browser Speech Error", 
-          description: `Could not speak text. Voice quality/availability for ${lang} depends on your browser/OS.`, 
+          description: `Could not speak text. Voice quality/availability for ${lang} depends on your browser/OS. Some dialects may not be accurately represented.`, 
           variant: "destructive" 
         });
         if (type === 'input') setIsSpeakingInput(false); else setIsSpeakingOutput(false);
@@ -218,6 +233,7 @@ export default function QuickTranslator() {
     }
   };
 
+
   const handleToggleListen = () => {
     if (!speechRecognition) {
        setSttError("Speech recognition (Mic icon) is not supported or enabled in your browser.");
@@ -227,16 +243,23 @@ export default function QuickTranslator() {
       speechRecognition.stop();
     } else {
       try {
-        speechRecognition.lang = languageToBcp47(currentSourceLang);
+        speechRecognition.lang = languageToBcp47(currentSourceLang); // Use currentSourceLang for STT
         speechRecognition.start();
-        setSttError(null); 
+        setSttError(null); // Clear previous errors
       } catch (e) {
          console.error("Error starting speech recognition:", e);
-         setSttError("Could not start voice input. Check microphone permissions.");
-         setIsListening(false);
+         setSttError("Could not start voice input. Check microphone permissions and ensure it's not in use.");
+         setIsListening(false); // Ensure isListening is false if start fails
       }
     }
   };
+
+  // Render placeholders if not mounted to avoid hydration mismatch
+  const sourcePlaceholder = mounted ? `Enter text in ${currentSourceLang}... (or use microphone)` : "Loading languages...";
+  const targetPlaceholder = mounted ? `Translation in ${currentTargetLang} will appear here...` : "Loading languages...";
+  const sourceAriaLabel = mounted ? `Input text in ${currentSourceLang}` : "Input text area";
+  const targetAriaLabel = mounted ? `Output text in ${currentTargetLang}` : "Output text area";
+
 
   return (
     <Card className="shadow-lg w-full">
@@ -255,8 +278,8 @@ export default function QuickTranslator() {
           <div className="flex-1 w-full">
             <Label htmlFor="quick-source-language" className="mb-1 block text-sm font-medium">From</Label>
             <Select
-              value={currentSourceLang}
-              onValueChange={(value) => { if (mounted) setGlobalSourceLanguage(value as Language)}}
+              value={currentSourceLang} // Use local state for display
+              onValueChange={(value) => { if (mounted) setGlobalSourceLanguage(value as Language)}} // Update global context
               disabled={!mounted || isLoadingTranslation || isSpeakingInput || isSpeakingOutput || isListening}
             >
               <SelectTrigger id="quick-source-language" className="w-full">
@@ -271,16 +294,18 @@ export default function QuickTranslator() {
               </SelectContent>
             </Select>
           </div>
+
           <div className="self-center pt-0 sm:pt-5">
             <Button variant="ghost" size="icon" onClick={handleSwapLanguages} aria-label="Swap languages" disabled={!mounted || isLoadingTranslation || isSpeakingInput || isSpeakingOutput || isListening}>
               <ArrowRightLeft className="h-5 w-5" />
             </Button>
           </div>
+
           <div className="flex-1 w-full">
             <Label htmlFor="quick-target-language" className="mb-1 block text-sm font-medium">To</Label>
             <Select
-              value={currentTargetLang}
-              onValueChange={(value) => { if (mounted) setGlobalTargetLanguage(value as Language)}}
+              value={currentTargetLang} // Use local state for display
+              onValueChange={(value) => { if (mounted) setGlobalTargetLanguage(value as Language)}} // Update global context
               disabled={!mounted || isLoadingTranslation || isSpeakingInput || isSpeakingOutput || isListening}
             >
               <SelectTrigger id="quick-target-language" className="w-full">
@@ -299,12 +324,12 @@ export default function QuickTranslator() {
 
         <div className="relative">
           <Textarea
-            placeholder={`Enter text in ${currentSourceLang}... (or use microphone)`}
+            placeholder={sourcePlaceholder}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             rows={4}
             className="resize-none text-base p-3 rounded-md shadow-sm focus:ring-primary focus:border-primary pr-20"
-            aria-label={`Input text in ${currentSourceLang}`}
+            aria-label={sourceAriaLabel}
             disabled={!mounted || isLoadingTranslation || isSpeakingInput || isSpeakingOutput || isListening}
           />
           <div className="absolute top-2 right-2 flex flex-col space-y-1">
@@ -336,12 +361,12 @@ export default function QuickTranslator() {
 
         <div className="relative">
             <Textarea
-            placeholder={`Translation in ${currentTargetLang} will appear here...`}
+            placeholder={targetPlaceholder}
             value={outputText}
             readOnly
             rows={4}
             className="bg-muted/30 resize-none text-base p-3 rounded-md shadow-sm border-dashed pr-10"
-            aria-label={`Output text in ${currentTargetLang}`}
+            aria-label={targetAriaLabel}
             />
             <div className="absolute top-2 right-2">
             <Button
@@ -377,4 +402,3 @@ export default function QuickTranslator() {
     </Card>
   );
 }
-
