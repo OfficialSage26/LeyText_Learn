@@ -1,10 +1,11 @@
+
 "use client";
 
 import Link from 'next/link';
 import { LogoIcon } from '@/components/icons/LogoIcon';
 import NavMenu from './NavMenu';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Menu } from 'lucide-react';
 import { useMounted } from '@/hooks/useMounted';
 
@@ -48,12 +49,14 @@ export default function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[240px] p-0">
-              <div className="p-4">
-                <Link href="/" className="flex items-center space-x-2 mb-4">
-                  <LogoIcon className="h-6 w-6 text-primary" />
-                  <span className="font-bold text-lg">LeyText Learn</span>
-                </Link>
-              </div>
+              <SheetHeader className="p-4 border-b">
+                <SheetTitle asChild>
+                  <Link href="/" className="flex items-center space-x-2">
+                    <LogoIcon className="h-6 w-6 text-primary" />
+                    <span className="font-bold text-lg">LeyText Learn</span>
+                  </Link>
+                </SheetTitle>
+              </SheetHeader>
               <NavMenu isMobile={true} />
             </SheetContent>
           </Sheet>
