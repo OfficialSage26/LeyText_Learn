@@ -19,7 +19,12 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
   const [showPronunciation, setShowPronunciation] = useState(false);
 
   useEffect(() => {
-    setShuffledWords([...words].sort(() => Math.random() - 0.5));
+    // Ensure words array is not empty before shuffling to prevent errors if words is undefined/null initially
+    if (words && words.length > 0) {
+      setShuffledWords([...words].sort(() => Math.random() - 0.5));
+    } else {
+      setShuffledWords([]);
+    }
     setCurrentIndex(0);
     setIsFlipped(false);
     setShowPronunciation(false);
@@ -27,6 +32,7 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
 
   const currentWord = useMemo(() => {
     if (shuffledWords.length === 0) return null;
+    // Ensure currentIndex is always valid
     return shuffledWords[currentIndex % shuffledWords.length];
   }, [shuffledWords, currentIndex]);
 
@@ -43,13 +49,17 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
   };
 
   const handleShuffle = () => {
-    setShuffledWords([...words].sort(() => Math.random() - 0.5));
+    if (words && words.length > 0) {
+      setShuffledWords([...words].sort(() => Math.random() - 0.5));
+    } else {
+      setShuffledWords([]);
+    }
     setCurrentIndex(0);
     setIsFlipped(false);
     setShowPronunciation(false);
   };
 
-  if (shuffledWords.length === 0) {
+  if (!words || words.length === 0) {
     return (
       <Card className="w-full max-w-lg mx-auto text-center">
         <CardContent className="p-8">
@@ -61,7 +71,7 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
     );
   }
 
-  if (!currentWord) return null;
+  if (!currentWord) return null; // Should be covered by the check above, but good for safety
 
   return (
     <div className="w-full max-w-xl mx-auto flex flex-col items-center space-y-6">
@@ -76,6 +86,7 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
         tabIndex={0}
         aria-label={`Flashcard: ${currentWord.word} (in ${currentWord.language}). ${isFlipped ? `Meaning: ${currentWord.meaning} (in ${currentWord.targetLanguage})` : 'Tap to see meaning.'}`}
         onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setIsFlipped(!isFlipped)}
+        aria-live="polite"
       >
         {/* Front of the card */}
         <Card className="absolute w-full h-full backface-hidden bg-card flex flex-col items-center justify-center p-6 text-center">
@@ -111,10 +122,7 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
 
         {/* Back of the card */}
         <Card className="absolute w-full h-full backface-hidden rotate-y-180 bg-accent text-accent-foreground flex flex-col items-center justify-center p-6 text-center">
-          <CardContent className={cn(
-            "flex flex-col items-center justify-center w-full",
-            "rotate-y-180" // Apply counter-rotation to the content of the back face
-          )}>
+          <CardContent className="flex flex-col items-center justify-center w-full">
             <p className="text-xs text-accent-foreground/80 mb-2">{currentWord.targetLanguage}</p>
             <h3 className="text-3xl font-semibold mb-3">{currentWord.meaning}</h3>
             {currentWord.userSentence && <p className="text-sm italic mb-2">"{currentWord.userSentence}"</p>}
