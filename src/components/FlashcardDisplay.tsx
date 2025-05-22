@@ -5,8 +5,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import type { WordEntry } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, Shuffle, RotateCcw, Info } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Shuffle, RotateCcw, Info, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useMounted } from '@/hooks/useMounted';
 
 interface FlashcardDisplayProps {
   words: WordEntry[];
@@ -17,24 +18,23 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
   const [isFlipped, setIsFlipped] = useState(false);
   const [shuffledWords, setShuffledWords] = useState<WordEntry[]>([]);
   const [showPronunciation, setShowPronunciation] = useState(false);
+  const mounted = useMounted();
 
   useEffect(() => {
-    // Ensure words array is not empty before shuffling to prevent errors if words is undefined/null initially
-    if (words && words.length > 0) {
+    if (mounted && words && words.length > 0) {
       setShuffledWords([...words].sort(() => Math.random() - 0.5));
-    } else {
+    } else if (mounted) {
       setShuffledWords([]);
     }
     setCurrentIndex(0);
     setIsFlipped(false);
     setShowPronunciation(false);
-  }, [words]);
+  }, [words, mounted]);
 
   const currentWord = useMemo(() => {
-    if (shuffledWords.length === 0) return null;
-    // Ensure currentIndex is always valid
+    if (!mounted || shuffledWords.length === 0) return null;
     return shuffledWords[currentIndex % shuffledWords.length];
-  }, [shuffledWords, currentIndex]);
+  }, [shuffledWords, currentIndex, mounted]);
 
   const handleNext = () => {
     setCurrentIndex((prev) => prev + 1);
@@ -49,15 +49,24 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
   };
 
   const handleShuffle = () => {
-    if (words && words.length > 0) {
+    if (mounted && words && words.length > 0) {
       setShuffledWords([...words].sort(() => Math.random() - 0.5));
-    } else {
+    } else if (mounted) {
       setShuffledWords([]);
     }
     setCurrentIndex(0);
     setIsFlipped(false);
     setShowPronunciation(false);
   };
+
+  if (!mounted) {
+    return (
+      <div className="w-full max-w-xl mx-auto flex flex-col items-center justify-center h-80">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="mt-4 text-muted-foreground">Loading flashcards...</p>
+      </div>
+    );
+  }
 
   if (!words || words.length === 0) {
     return (
@@ -71,7 +80,17 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
     );
   }
 
-  if (!currentWord) return null; // Should be covered by the check above, but good for safety
+  if (!currentWord) {
+     // This case should ideally be covered by the loading state or "No words" card
+     // but it's a good safety net if shuffledWords is empty after mount for some reason
+    return (
+        <div className="w-full max-w-xl mx-auto flex flex-col items-center justify-center h-80">
+            <Info className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <p className="mt-4 text-muted-foreground">Preparing flashcard...</p>
+        </div>
+    );
+  }
+
 
   return (
     <div className="w-full max-w-xl mx-auto flex flex-col items-center space-y-6">
@@ -166,3 +185,4 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
     </div>
   );
 }
+
