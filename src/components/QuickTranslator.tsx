@@ -11,12 +11,11 @@ import { ArrowRightLeft, Languages, Loader2, Mic, Volume2, X, AlertTriangle } fr
 import { useGlobalAppContext } from '@/hooks/useGlobalAppContext';
 import { SUPPORTED_LANGUAGES, type Language } from '@/types';
 import { translateText } from '@/ai/flows/translate-text-flow';
-import { synthesizeSpeech } from '@/ai/flows/synthesize-speech-flow'; // Import the Genkit flow
+import { synthesizeSpeech } from '@/ai/flows/synthesize-speech-flow';
 import { useToast } from "@/hooks/use-toast";
 import { useMounted } from '@/hooks/useMounted';
 import { cn } from '@/lib/utils';
 
-// Web Speech API interfaces (simplified) for STT
 interface SpeechRecognition extends EventTarget {
   lang: string;
   continuous: boolean;
@@ -35,13 +34,12 @@ declare global {
   }
 }
 
-// BCP 47 language codes for Web Speech API (STT and browser TTS)
 const languageToBcp47 = (lang: Language): string => {
   switch (lang) {
     case "English": return "en-US";
     case "Tagalog": return "tl-PH";
-    case "Bisaya": return "ceb-PH"; // Cebuano for Bisaya
-    case "Waray-Waray": return "war-PH"; // Waray (less common, browser support varies)
+    case "Bisaya": return "ceb-PH";
+    case "Waray-Waray": return "war-PH";
     default: return "en-US";
   }
 };
@@ -137,8 +135,12 @@ export default function QuickTranslator() {
   }, [mounted, globalSourceLanguage, globalTargetLanguage, setGlobalTargetLanguage]);
 
   const handleSwapLanguages = () => {
-    setGlobalSourceLanguage(globalTargetLanguage); 
-    setGlobalTargetLanguage(globalSourceLanguage); 
+    const oldSource = currentSourceLang;
+    const oldTarget = currentTargetLang;
+    setGlobalSourceLanguage(oldTarget); 
+    setGlobalTargetLanguage(oldSource);
+    setCurrentSourceLang(oldTarget);
+    setCurrentTargetLang(oldSource);
 
     if (outputText.trim() !== '') {
         setInputText(outputText);
@@ -151,7 +153,7 @@ export default function QuickTranslator() {
       setOutputText('');
       return;
     }
-    if (globalSourceLanguage === globalTargetLanguage) {
+    if (currentSourceLang === currentTargetLang) {
       setOutputText(inputText);
       return;
     }
@@ -161,8 +163,8 @@ export default function QuickTranslator() {
     try {
       const result = await translateText({
         text: inputText,
-        sourceLanguage: globalSourceLanguage,
-        targetLanguage: globalTargetLanguage,
+        sourceLanguage: currentSourceLang,
+        targetLanguage: currentTargetLang,
       });
       setOutputText(result.translatedText);
     } catch (e) {
@@ -178,7 +180,7 @@ export default function QuickTranslator() {
     }
   };
 
-  const playBase64Audio = (base64Audio: string) => {
+  const playBase64Audio = (base64Audio: string, type: 'input' | 'output') => {
     const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
     audio.play()
       .catch(err => {
@@ -186,8 +188,7 @@ export default function QuickTranslator() {
         toast({ title: "Audio Playback Error", description: "Could not play synthesized audio.", variant: "destructive" });
       })
       .finally(() => {
-        setIsSpeakingInput(false);
-        setIsSpeakingOutput(false);
+        if (type === 'input') setIsSpeakingInput(false); else setIsSpeakingOutput(false);
       });
   };
 
@@ -214,7 +215,7 @@ export default function QuickTranslator() {
     };
     utterance.onerror = (event) => {
       console.error("Browser SpeechSynthesisUtterance error", event);
-      toast({ title: "Browser Speech Error", description: `Could not speak text. Voice quality/availability for ${lang} depends on your browser/OS. Some dialects may not be accurately represented.`, variant: "destructive" });
+      toast({ title: "Browser Speech Error", description: `Could not speak text. Voice quality/availability for ${lang} depends on your browser/OS.`, variant: "destructive" });
       if (type === 'input') setIsSpeakingInput(false); else setIsSpeakingOutput(false);
     };
     window.speechSynthesis.speak(utterance);
@@ -222,29 +223,34 @@ export default function QuickTranslator() {
 
   const handleSpeak = async (text: string, lang: Language, type: 'input' | 'output') => {
     if (!text.trim()) return;
-    if (type === 'input' && isSpeakingInput) return;
-    if (type === 'output' && isSpeakingOutput) return;
+    if (type === 'input' && isSpeakingInput) { window.speechSynthesis.cancel(); setIsSpeakingInput(false); return; }
+    if (type === 'output' && isSpeakingOutput) { window.speechSynthesis.cancel(); setIsSpeakingOutput(false); return; }
 
     if (type === 'input') setIsSpeakingInput(true); else setIsSpeakingOutput(true);
 
     try {
+      // Attempt to use Genkit flow (which tries Google Cloud TTS, currently only for Tagalog)
       const { audioBase64 } = await synthesizeSpeech({ text, language: lang });
 
       if (audioBase64) {
-        playBase64Audio(audioBase64);
+        playBase64Audio(audioBase64, type);
       } else {
-        // Fallback to browser TTS if Google Cloud TTS not available for the language or fails
+        // Fallback to browser TTS if Genkit flow doesn't provide audio
+        let toastMessage = `Using browser's default voice for ${lang}. Quality may vary.`;
+        if (lang === "Tagalog") {
+          toastMessage = `Premium Filipino voice not available, using browser's default voice for Tagalog. Quality may vary.`;
+        }
         toast({
           title: "TTS Notice",
-          description: `High-quality TTS for ${lang} may not be available. Using browser's default voice.`,
+          description: toastMessage,
           variant: "default" 
         });
         speakWithBrowserTTS(text, lang, type);
       }
     } catch (error) {
       console.error("Error calling synthesizeSpeech flow or playing audio:", error);
-      toast({ title: "Speech Error", description: "Could not synthesize or play speech. Falling back to browser TTS.", variant: "destructive" });
-      speakWithBrowserTTS(text, lang, type); // Attempt fallback on general error too
+      toast({ title: "Speech Error", description: `Could not synthesize or play speech for ${lang}. Falling back to browser TTS.`, variant: "destructive" });
+      speakWithBrowserTTS(text, lang, type); 
     }
   };
 
@@ -272,6 +278,15 @@ export default function QuickTranslator() {
   const targetPlaceholder = mounted ? `Translation in ${currentTargetLang} will appear here...` : "Loading languages...";
   const sourceAriaLabel = mounted ? `Input text in ${currentSourceLang}` : "Input text area";
   const targetAriaLabel = mounted ? `Output text in ${currentTargetLang}` : "Output text area";
+
+  // Effect to update local language states if global context changes
+  useEffect(() => {
+    if (mounted) {
+      setCurrentSourceLang(globalSourceLanguage);
+      setCurrentTargetLang(globalTargetLanguage);
+    }
+  }, [mounted, globalSourceLanguage, globalTargetLanguage]);
+
 
   return (
     <Card className="shadow-lg w-full">
@@ -359,7 +374,7 @@ export default function QuickTranslator() {
               variant="ghost"
               size="icon"
               onClick={() => handleSpeak(inputText, currentSourceLang, 'input')}
-              disabled={!mounted || !inputText.trim() || isLoadingTranslation || isSpeakingInput || isSpeakingOutput || isListening}
+              disabled={!mounted || !inputText.trim() || isLoadingTranslation || isSpeakingOutput || isListening }
               className="h-8 w-8 p-1.5 hover:bg-accent"
               aria-label={`Speak input text in ${currentSourceLang}`}
             >
@@ -384,7 +399,7 @@ export default function QuickTranslator() {
                 variant="ghost"
                 size="icon"
                 onClick={() => handleSpeak(outputText, currentTargetLang, 'output')}
-                disabled={!mounted || !outputText.trim() || isLoadingTranslation || isSpeakingInput || isSpeakingOutput || isListening}
+                disabled={!mounted || !outputText.trim() || isLoadingTranslation || isSpeakingInput || isListening }
                 className="h-8 w-8 p-1.5 hover:bg-accent"
                 aria-label={`Speak translated text in ${currentTargetLang}`}
             >
@@ -413,3 +428,4 @@ export default function QuickTranslator() {
     </Card>
   );
 }
+
