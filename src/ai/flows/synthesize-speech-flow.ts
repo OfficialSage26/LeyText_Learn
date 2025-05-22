@@ -26,32 +26,25 @@ const SynthesizeSpeechOutputSchema = z.object({
 });
 export type SynthesizeSpeechOutput = z.infer<typeof SynthesizeSpeechOutputSchema>;
 
-// Initialize the TextToSpeechClient
-// IMPORTANT: This requires Google Cloud authentication to be set up in the environment
-// (e.g., GOOGLE_APPLICATION_CREDENTIALS environment variable).
 let ttsClient: TextToSpeechClient | null = null;
 try {
   ttsClient = new TextToSpeechClient();
 } catch (error) {
   console.error("Failed to initialize TextToSpeechClient. Make sure Google Cloud credentials are set up correctly.", error);
-  // Depending on how critical this is, you might want to handle this more gracefully
-  // or ensure credentials are set before deploying/running.
 }
 
-
-// Mapping from app language to Google Cloud TTS language codes and preferred voices
-// Note: Google Cloud TTS does not support Bisaya or Waray-Waray with standard voices.
-// Filipino is used for Tagalog.
+// Mapping from app language to Google Cloud TTS language codes and preferred voices.
+// Focuses on providing Google Cloud TTS specifically for Tagalog.
+// Other languages will fall back to browser TTS in the client component.
 const languageToGoogleTTSConfig = (language: Language): { languageCode: string; name?: string } | null => {
   switch (language) {
-    case "English":
-      return { languageCode: "en-US", name: "en-US-Standard-C" }; // Example voice, many others available
     case "Tagalog":
-      return { languageCode: "fil-PH", name: "fil-PH-Standard-A" }; // Example voice for Filipino
+      return { languageCode: "fil-PH", name: "fil-PH-Standard-A" }; // Preferred Filipino voice
+    case "English":
     case "Bisaya":
     case "Waray-Waray":
     default:
-      return null; // Not directly supported by Google Cloud TTS standard voices
+      return null; // Other languages will use browser's TTS via fallback in QuickTranslator
   }
 };
 
@@ -70,14 +63,14 @@ const synthesizeSpeechFlow = ai.defineFlow(
   },
   async ({ text, language }) => {
     if (!ttsClient) {
-      console.error("TextToSpeechClient not initialized. Cannot synthesize speech.");
+      console.error("TextToSpeechClient not initialized. Cannot synthesize speech via Google Cloud.");
       return { audioBase64: null };
     }
 
     const ttsConfig = languageToGoogleTTSConfig(language);
 
     if (!ttsConfig || !text.trim()) {
-      // Language not supported by Google Cloud TTS or empty text
+      // Language not configured for Google Cloud TTS in this flow, or empty text
       return { audioBase64: null };
     }
 
@@ -85,22 +78,22 @@ const synthesizeSpeechFlow = ai.defineFlow(
       const request = {
         input: { text: text },
         voice: { languageCode: ttsConfig.languageCode, name: ttsConfig.name },
-        audioConfig: { audioEncoding: 'MP3' as const }, // 'MP3' or 'LINEAR16'
+        audioConfig: { audioEncoding: 'MP3' as const },
       };
 
-      // @ts-ignore // Types for synthesizeSpeech might be slightly off if library version changes
+      // @ts-ignore
       const [response] = await ttsClient.synthesizeSpeech(request);
       
       if (response.audioContent instanceof Uint8Array) {
          return { audioBase64: Buffer.from(response.audioContent).toString('base64') };
       } else if (typeof response.audioContent === 'string') {
-         return { audioBase64: response.audioContent }; // Already base64 string
+         return { audioBase64: response.audioContent }; 
       }
-      console.warn("Unexpected audioContent format from TTS API:", response.audioContent);
+      console.warn("Unexpected audioContent format from Google Cloud TTS API:", response.audioContent);
       return { audioBase64: null };
 
     } catch (error) {
-      console.error(`Error synthesizing speech for ${language}:`, error);
+      console.error(`Error synthesizing speech for ${language} via Google Cloud TTS:`, error);
       return { audioBase64: null };
     }
   }
