@@ -1,11 +1,10 @@
 
 'use server';
 /**
- * @fileOverview Synthesizes speech using ElevenLabs, Google Cloud Text-to-Speech API, or browser's default.
- * Priority:
- * 1. ElevenLabs (for Tagalog, if API key & voice ID are configured)
- * 2. Google Cloud TTS (for Tagalog, if configured and ElevenLabs fails or is not configured)
- * 3. Browser's default TTS (for other languages or as a fallback)
+ * @fileOverview Synthesizes speech. Priority:
+ * 1. ElevenLabs (for all languages, if API key & voice ID are configured)
+ * 2. Google Cloud TTS (primarily for Tagalog, if configured and ElevenLabs fails or is not configured)
+ * 3. Browser's default TTS (as a fallback)
  *
  * - synthesizeSpeech - A function that synthesizes speech for supported languages.
  * - SynthesizeSpeechInput - The input type for the synthesizeSpeech function.
@@ -40,13 +39,11 @@ try {
 }
 
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
-// Default Voice ID for ElevenLabs (e.g., "Rachel" - a versatile, commonly used voice)
-// Users can override this with their preferred voice via an environment variable if desired.
-const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM'; 
-const ELEVENLABS_MODEL_ID = 'eleven_multilingual_v2'; // Or a newer/more specific model if preferred
+const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM'; // Default: "Rachel"
+const ELEVENLABS_MODEL_ID = 'eleven_multilingual_v2';
 
 async function synthesizeWithElevenLabs(text: string, language: Language): Promise<string | null> {
-  if (!ELEVENLABS_API_KEY || language !== "Tagalog") { // Currently, focus ElevenLabs on Tagalog
+  if (!ELEVENLABS_API_KEY) { // Only attempt if API key is present
     return null;
   }
   if (!text.trim()) return null;
@@ -71,31 +68,26 @@ async function synthesizeWithElevenLabs(text: string, language: Language): Promi
 
     if (!response.ok) {
       const errorBody = await response.text();
-      console.error(`ElevenLabs API error: ${response.status} - ${response.statusText}. Body: ${errorBody}`);
+      console.error(`ElevenLabs API error for language ${language}: ${response.status} - ${response.statusText}. Body: ${errorBody}`);
       return null;
     }
 
     const audioArrayBuffer = await response.arrayBuffer();
     return Buffer.from(audioArrayBuffer).toString('base64');
   } catch (error) {
-    console.error('Error calling ElevenLabs API:', error);
+    console.error(`Error calling ElevenLabs API for language ${language}:`, error);
     return null;
   }
 }
 
-
-// Mapping from app language to Google Cloud TTS language codes and preferred voices.
-// Focuses on providing Google Cloud TTS specifically for Tagalog.
 const languageToGoogleTTSConfig = (language: Language): { languageCode: string; name?: string } | null => {
   switch (language) {
     case "Tagalog":
-      return { languageCode: "fil-PH", name: "fil-PH-Standard-A" }; // Preferred Filipino voice
-    // English is supported by Google, but we might want to let ElevenLabs handle it if configured, or browser for free tier.
-    // For this iteration, Google TTS for Tagalog is the primary cloud focus after ElevenLabs.
-    // case "English":
-    //   return { languageCode: "en-US", name: "en-US-Standard-C" };
+      return { languageCode: "fil-PH", name: "fil-PH-Standard-A" };
+    // English could be added here if desired, e.g., { languageCode: "en-US", name: "en-US-Standard-C" }
+    // Bisaya and Waray-Waray are not standardly supported by Google Cloud TTS with distinct voices.
     default:
-      return null; // Other languages will use browser's TTS or no cloud TTS in this flow
+      return null;
   }
 };
 
@@ -152,17 +144,14 @@ const synthesizeSpeechFlow = ai.defineFlow(
       return { audioBase64: null, source: 'none' };
     }
 
-    // Priority 1: ElevenLabs for Tagalog
-    if (language === "Tagalog") {
-      const elevenLabsAudio = await synthesizeWithElevenLabs(text, language);
-      if (elevenLabsAudio) {
-        console.log("Synthesized speech with ElevenLabs for Tagalog.");
-        return { audioBase64: elevenLabsAudio, source: 'elevenlabs' };
-      }
+    // Priority 1: ElevenLabs for all configured languages
+    const elevenLabsAudio = await synthesizeWithElevenLabs(text, language);
+    if (elevenLabsAudio) {
+      console.log(`Synthesized speech with ElevenLabs for ${language}.`);
+      return { audioBase64: elevenLabsAudio, source: 'elevenlabs' };
     }
 
-    // Priority 2: Google Cloud TTS for Tagalog (if ElevenLabs failed or not configured for Tagalog)
-    // Or other languages if configured in languageToGoogleTTSConfig
+    // Priority 2: Google Cloud TTS (primarily for Tagalog as per current config)
     const googleCloudAudio = await synthesizeWithGoogleCloud(text, language);
     if (googleCloudAudio) {
       console.log(`Synthesized speech with Google Cloud TTS for ${language}.`);
@@ -174,3 +163,4 @@ const synthesizeSpeechFlow = ai.defineFlow(
     return { audioBase64: null, source: 'browser' };
   }
 );
+
