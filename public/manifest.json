@@ -1,12 +1,8 @@
 
 {
   "name": "LeyText Learn",
-  "short_name": "LeyText Learn",
+  "short_name": "LeyTextLearn",
   "description": "Learn Tagalog, English, Bisaya, and Waray-Waray with LeyText Learn!",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#3B82F6",
-  "theme_color": "#3B82F6",
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
@@ -20,5 +16,10 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#3B82F6",
+  "theme_color": "#3B82F6",
+  "orientation": "portrait-primary"
 }
