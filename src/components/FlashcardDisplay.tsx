@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { WordEntry } from '@/types';
+import type { WordEntry } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight, Shuffle, RotateCcw, Info } from 'lucide-react';
@@ -22,6 +22,7 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
     setShuffledWords([...words].sort(() => Math.random() - 0.5));
     setCurrentIndex(0);
     setIsFlipped(false);
+    setShowPronunciation(false);
   }, [words]);
 
   const currentWord = useMemo(() => {
@@ -64,7 +65,7 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
 
   return (
     <div className="w-full max-w-xl mx-auto flex flex-col items-center space-y-6">
-      <div 
+      <div
         className={cn(
           "relative w-full h-80 perspective cursor-pointer rounded-xl shadow-xl",
           "transition-transform duration-700 transform-style-preserve-3d",
@@ -82,7 +83,7 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
             <p className="text-xs text-muted-foreground mb-2">{currentWord.language}</p>
             <h2 className="text-4xl font-bold mb-4">{currentWord.word}</h2>
             {currentWord.pronunciation && (
-              <p 
+              <p
                 className={cn(
                   "text-muted-foreground text-sm transition-opacity duration-300",
                   showPronunciation ? "opacity-100" : "opacity-0"
@@ -93,9 +94,9 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
               </p>
             )}
             {currentWord.pronunciation && (
-                <Button 
-                variant="ghost" 
-                size="sm" 
+                <Button
+                variant="ghost"
+                size="sm"
                 className="mt-4 text-xs"
                 onClick={(e) => { e.stopPropagation(); setShowPronunciation(!showPronunciation); }}
                 aria-pressed={showPronunciation}
@@ -110,7 +111,10 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
 
         {/* Back of the card */}
         <Card className="absolute w-full h-full backface-hidden rotate-y-180 bg-accent text-accent-foreground flex flex-col items-center justify-center p-6 text-center">
-          <CardContent className="flex flex-col items-center justify-center w-full">
+          <CardContent className={cn(
+            "flex flex-col items-center justify-center w-full",
+            "rotate-y-180" // Apply counter-rotation to the content of the back face
+          )}>
             <p className="text-xs text-accent-foreground/80 mb-2">{currentWord.targetLanguage}</p>
             <h3 className="text-3xl font-semibold mb-3">{currentWord.meaning}</h3>
             {currentWord.userSentence && <p className="text-sm italic mb-2">"{currentWord.userSentence}"</p>}
@@ -125,7 +129,7 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
           </CardContent>
         </Card>
       </div>
-      
+
       <style jsx>{`
         .perspective { perspective: 1000px; }
         .transform-style-preserve-3d { transform-style: preserve-3d; }
@@ -154,4 +158,3 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
     </div>
   );
 }
-
