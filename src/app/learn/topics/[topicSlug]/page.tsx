@@ -28,7 +28,6 @@ const topicDetails: { [key: string]: { displayName: string; category: string } }
   'verbs': { displayName: "Common Verbs", category: "Verbs" },
   'shopping': { displayName: "Shopping", category: "Shopping" },
   'work': { displayName: "Work & School", category: "Work" },
-  // Add more mappings as needed, ensure slug matches slugify(category) from topics/page.tsx
 };
 
 export default function TopicPage({ params: paramsPromise }: { params: { topicSlug: string } }) {

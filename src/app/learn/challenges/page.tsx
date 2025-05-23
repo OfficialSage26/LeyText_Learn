@@ -2,12 +2,43 @@
 "use client";
 
 import AppLayout from '@/components/layout/AppLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Zap, Construction } from 'lucide-react';
+import { ArrowLeft, Zap, Puzzle, ListChecks, Ear } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useGlobalAppContext } from '@/hooks/useGlobalAppContext';
+
+const challengeTypes = [
+  {
+    title: "Vocabulary Speed Quiz",
+    description: "Test your word recognition against the clock.",
+    icon: Zap,
+    dataAiHint: "stopwatch quiz",
+    status: "Coming Soon"
+  },
+  {
+    title: "Sentence Builder",
+    description: "Drag and drop words to form correct sentences.",
+    icon: Puzzle,
+    dataAiHint: "puzzle blocks",
+    status: "Coming Soon"
+  },
+  {
+    title: "Listening Comprehension",
+    description: "Listen to audio clips and answer questions.",
+    icon: Ear,
+    dataAiHint: "headphones audio",
+    status: "Coming Soon"
+  },
+   {
+    title: "Translation Challenge",
+    description: "Translate phrases from and to your target language.",
+    icon: ListChecks, // Using ListChecks as a generic "task" icon
+    dataAiHint: "translate checklist",
+    status: "Coming Soon"
+  }
+];
 
 export default function PracticeChallengesPage() {
   const { targetLanguage } = useGlobalAppContext();
@@ -30,26 +61,45 @@ export default function PracticeChallengesPage() {
                 </Button>
             </div>
             <CardDescription className="text-base sm:text-lg mt-4">
-              Test your {targetLanguage} skills with interactive exercises, quizzes, and real-world scenarios. This section is under construction, but exciting challenges are planned!
+              Test your {targetLanguage} skills with interactive exercises. Select a challenge type below to get started (more coming soon!).
             </CardDescription>
           </CardHeader>
-          <CardContent className="text-center">
-            <div className="relative w-full max-w-2xl mx-auto aspect-[2/1] mb-6">
-              <Image 
-                src="https://placehold.co/800x400.png" 
-                alt="Illustration of game elements like puzzles or achievement badges, representing practice challenges." 
-                layout="fill"
-                objectFit="contain"
-                className="rounded-lg shadow-md"
-                data-ai-hint="game puzzle achievement"
-              />
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {challengeTypes.map((challenge) => (
+                <Card key={challenge.title} className="flex flex-col">
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <challenge.icon className="w-7 h-7 text-primary" />
+                      <CardTitle className="text-xl">{challenge.title}</CardTitle>
+                    </div>
+                    <CardDescription>{challenge.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-grow" />
+                  <CardFooter>
+                    <Button className="w-full" disabled>
+                      {challenge.status}
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
             </div>
-            <Construction className="w-16 h-16 text-accent mx-auto mb-4" />
-            <p className="text-muted-foreground text-lg sm:text-xl mb-8">
-              Engaging challenges and skill-testing activities are being developed and will be available soon! Get ready to put your {targetLanguage} knowledge to the test.
-            </p>
           </CardContent>
         </Card>
+        
+        <div className="text-center mt-8">
+          <Image 
+            src="https://placehold.co/800x300.png" 
+            alt="Banner showing diverse learning activities and challenges." 
+            width={800}
+            height={300}
+            className="rounded-lg shadow-md mx-auto"
+            data-ai-hint="learning game achievement"
+          />
+          <p className="text-muted-foreground text-lg sm:text-xl mt-6 mb-8">
+            More engaging challenges and skill-testing activities are being developed and will be available soon! Get ready to put your {targetLanguage} knowledge to the test.
+          </p>
+        </div>
       </div>
     </AppLayout>
   );

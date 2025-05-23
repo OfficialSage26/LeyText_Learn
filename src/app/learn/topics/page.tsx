@@ -25,7 +25,7 @@ export default function ExploreTopicsPage() {
   const { targetLanguage } = useGlobalAppContext();
 
   // Categories that are currently active and will have clickable links
-  const activeTopics = ["Greetings", "Food", "Travel", "Family"]; 
+  const activeTopics = ["Greetings", "Food", "Travel", "Family", "Numbers", "Verbs", "Shopping", "Work"]; 
 
   return (
     <AppLayout>
