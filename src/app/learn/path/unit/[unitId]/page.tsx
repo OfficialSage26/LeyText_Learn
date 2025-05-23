@@ -1,37 +1,54 @@
 
 "use client";
 
-import React, { use } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { useGlobalAppContext } from '@/hooks/useGlobalAppContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, ChevronRight, BookOpen, Info, Palette, Hash, CalendarDays, MessageSquare, Users2, Brain, Utensils, MapPin, Building2, ShoppingCart, PaletteIcon } from 'lucide-react'; // Added more icons
+import { ArrowLeft, ChevronRight, BookOpen, Info, Palette, Hash, CalendarDays, MessageSquare, Users2, Brain, Utensils, MapPin, Building2, ShoppingCart, PaletteIcon, Loader2 } from 'lucide-react'; 
 import Link from 'next/link';
-import { getUnitById, learningPathConfig, type LessonConfig } from '@/config/learningPath'; // Import LessonConfig if needed for direct use
+import { getUnitById, learningPathConfig, type LessonConfig } from '@/config/learningPath';
+import { useMounted } from '@/hooks/useMounted';
+import type { Language } from '@/types';
+import { SUPPORTED_LANGUAGES } from '@/types';
+
+// Minimal types to avoid full import of SUPPORTED_LANGUAGES if not needed elsewhere for the const
+// const SUPPORTED_LANGUAGES_CONST = ["English", "Tagalog", "Bisaya", "Waray-Waray"] as const;
+// type LanguageConst = (typeof SUPPORTED_LANGUAGES_CONST)[number];
+
 
 export default function UnitPage({ params: paramsPromise }: { params: { unitId: string } }) {
   const params = use(paramsPromise as Promise<{ unitId: string }>);
   const { unitId } = params;
-  const { targetLanguage, words: allWords } = useGlobalAppContext(); // Added allWords
+  const { targetLanguage: globalTargetLanguage, words: allWords } = useGlobalAppContext();
+  const mounted = useMounted();
+
+  const [displayLearningLanguage, setDisplayLearningLanguage] = useState<Language>(SUPPORTED_LANGUAGES[0]);
 
   const unit = getUnitById(unitId);
 
   // Determine if this unit page should display combined vocabulary (like old Unit 1)
   // or a list of lessons. For now, we are moving towards list of lessons for all.
-  const isMultiCategoryUnit = false; // Set to true if we revert Unit 1 to multi-category display
+  const isMultiCategoryUnit = false; 
 
-  const [lessonWords, setLessonWords] = React.useState<any[]>([]); // Using any for simplicity here
+  const [lessonWords, setLessonWords] = React.useState<any[]>([]); 
   const [isLoadingWords, setIsLoadingWords] = React.useState(false);
 
+  useEffect(() => {
+    if (mounted) {
+      setDisplayLearningLanguage(globalTargetLanguage);
+    }
+  }, [mounted, globalTargetLanguage]);
+
   React.useEffect(() => {
-    if (isMultiCategoryUnit && unitId === "unit1" && targetLanguage && allWords) {
+    if (mounted && isMultiCategoryUnit && unitId === "unit1" && globalTargetLanguage && allWords) {
       setIsLoadingWords(true);
       const unitConfig = learningPathConfig.find(u => u.id === "unit1");
       const categoriesToLoad = unitConfig?.lessons.map(l => l.category.toLowerCase()) || [];
       
       let relevantWords: any[] = [];
-      if (targetLanguage === 'English') {
+      if (globalTargetLanguage === 'English') {
         const meaningLanguage = SUPPORTED_LANGUAGES.find(l => l !== 'English') || 'Tagalog';
         relevantWords = allWords
           .filter(w =>
@@ -50,14 +67,14 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
         relevantWords = allWords
           .filter(w =>
             w.language === 'English' &&
-            w.targetLanguage === targetLanguage &&
+            w.targetLanguage === globalTargetLanguage &&
             w.category && categoriesToLoad.includes(w.category.toLowerCase())
           )
           .map(w_entry => ({
             ...w_entry,
             displayWord: w_entry.meaning,
             displayMeaning: w_entry.word,
-            displayLanguage: targetLanguage,
+            displayLanguage: globalTargetLanguage,
             meaningLanguage: 'English',
           }));
       }
@@ -74,7 +91,7 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
       setLessonWords(Object.entries(groupedWords).map(([category, words]) => ({ category, words: words.slice(0,10) }))); // Slice per category
       setIsLoadingWords(false);
     }
-  }, [isMultiCategoryUnit, unitId, targetLanguage, allWords]);
+  }, [isMultiCategoryUnit, unitId, globalTargetLanguage, allWords, mounted]);
 
 
   // Icons for categories - can be moved to a shared utility
@@ -115,6 +132,16 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
   }
   const UnitIcon = unit.icon || BookOpen;
 
+  if (!mounted) {
+    return (
+      <AppLayout>
+        <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="space-y-8">
@@ -122,7 +149,7 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
           <div className="flex-grow">
             <div className="flex items-start sm:items-center gap-3 mb-2">
               <UnitIcon className="w-10 h-10 text-primary flex-shrink-0 mt-1 sm:mt-0" />
-              <CardTitle className="text-2xl sm:text-3xl lg:text-4xl font-bold">{unit.title} - Learning {targetLanguage}</CardTitle>
+              <CardTitle className="text-2xl sm:text-3xl lg:text-4xl font-bold">{unit.title} - Learning {displayLearningLanguage}</CardTitle>
             </div>
             <CardDescription className="text-base sm:text-lg">{unit.description}</CardDescription>
           </div>
@@ -141,7 +168,7 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
           <CardContent className="space-y-4">
             {unit.lessons && unit.lessons.length > 0 ? (
               unit.lessons.map((lesson) => {
-                const LessonIcon = lesson.icon || BookOpen; // Default icon
+                const LessonIcon = lesson.icon || BookOpen; 
                 return (
                   <Card 
                     key={lesson.slug} 
@@ -173,24 +200,25 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
           </CardContent>
         </Card>
 
-        {/* This section is for the old way Unit 1 displayed multiple categories. 
-            It can be removed if all units now use the lesson list structure above. 
-            Kept for reference or if a mixed approach is desired. */}
+        
         {isMultiCategoryUnit && unitId === "unit1" && (
            <Card>
            <CardHeader>
              <CardTitle className="text-xl sm:text-2xl">Unit 1: Foundational Vocabulary</CardTitle>
              <CardDescription>
-               Learn essential words across different categories for {targetLanguage}. Meanings in {targetLanguage === 'English' ? (SUPPORTED_LANGUAGES.find(l=> l !== 'English') || 'Tagalog') : 'English'}.
+               Learn essential words across different categories for {displayLearningLanguage}. Meanings in {displayLearningLanguage === 'English' ? (SUPPORTED_LANGUAGES.find(l=> l !== 'English') || 'Tagalog') : 'English'}.
              </CardDescription>
            </CardHeader>
            <CardContent className="space-y-6">
              {isLoadingWords ? (
-                <p>Loading words...</p>
+                <div className="flex justify-center items-center py-10">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <p className="ml-2 text-muted-foreground">Loading words...</p>
+                </div>
              ) : lessonWords.length === 0 ? (
                <div className="text-center py-6">
                  <Info className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
-                 <p className="text-muted-foreground">No foundational vocabulary found for {targetLanguage}.</p>
+                 <p className="text-muted-foreground">No foundational vocabulary found for {displayLearningLanguage}.</p>
                </div>
              ) : (
                lessonWords.map((group, index) => {
@@ -206,7 +234,6 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
                          <Card key={item.id} className="p-3 text-sm shadow-sm">
                            <p className="font-medium text-primary">{item.displayWord}</p>
                            <p className="text-xs text-muted-foreground">({item.displayMeaning} - {item.meaningLanguage})</p>
-                           {/* Add AI Example button here if needed, similar to lessonSlug page */}
                          </Card>
                        ))}
                      </div>
@@ -217,14 +244,7 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
            </CardContent>
          </Card>
         )}
-
-
       </div>
     </AppLayout>
   );
 }
-
-
-// Minimal types to avoid full import of SUPPORTED_LANGUAGES if not needed elsewhere
-const SUPPORTED_LANGUAGES = ["English", "Tagalog", "Bisaya", "Waray-Waray"] as const;
-type Language = (typeof SUPPORTED_LANGUAGES)[number];
