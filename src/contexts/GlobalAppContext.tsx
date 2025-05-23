@@ -80,6 +80,45 @@ const initialWords: WordEntry[] = [
   { id: uuidv4(), word: "Go", meaning: "Kadto/Lakat", language: "English", targetLanguage: "Waray-Waray", category: "Verbs", createdAt: Date.now() - 24000 },
   { id: uuidv4(), word: "Want", meaning: "Gusto/Buot", language: "English", targetLanguage: "Waray-Waray", category: "Verbs", createdAt: Date.now() - 23000 },
   { id: uuidv4(), word: "Read", meaning: "Basa", language: "English", targetLanguage: "Waray-Waray", category: "Verbs", createdAt: Date.now() - 22000 },
+
+  // Numbers (1-5 for now)
+  { id: uuidv4(), word: "One", meaning: "Isa", language: "English", targetLanguage: "Tagalog", category: "Numbers", createdAt: Date.now() - 500000 },
+  { id: uuidv4(), word: "Two", meaning: "Dalawa", language: "English", targetLanguage: "Tagalog", category: "Numbers", createdAt: Date.now() - 490000 },
+  { id: uuidv4(), word: "Three", meaning: "Tatlo", language: "English", targetLanguage: "Tagalog", category: "Numbers", createdAt: Date.now() - 480000 },
+  { id: uuidv4(), word: "Four", meaning: "Apat", language: "English", targetLanguage: "Tagalog", category: "Numbers", createdAt: Date.now() - 470000 },
+  { id: uuidv4(), word: "Five", meaning: "Lima", language: "English", targetLanguage: "Tagalog", category: "Numbers", createdAt: Date.now() - 460000 },
+  { id: uuidv4(), word: "One", meaning: "Usa", language: "English", targetLanguage: "Bisaya", category: "Numbers", createdAt: Date.now() - 450000 },
+  { id: uuidv4(), word: "Two", meaning: "Duha", language: "English", targetLanguage: "Bisaya", category: "Numbers", createdAt: Date.now() - 440000 },
+  { id: uuidv4(), word: "Three", meaning: "Tulo", language: "English", targetLanguage: "Bisaya", category: "Numbers", createdAt: Date.now() - 430000 },
+  { id: uuidv4(), word: "Four", meaning: "Upat", language: "English", targetLanguage: "Bisaya", category: "Numbers", createdAt: Date.now() - 420000 },
+  { id: uuidv4(), word: "Five", meaning: "Lima", language: "English", targetLanguage: "Bisaya", category: "Numbers", createdAt: Date.now() - 410000 },
+  { id: uuidv4(), word: "One", meaning: "Usá", language: "English", targetLanguage: "Waray-Waray", category: "Numbers", createdAt: Date.now() - 400000 },
+  { id: uuidv4(), word: "Two", meaning: "Duhá", language: "English", targetLanguage: "Waray-Waray", category: "Numbers", createdAt: Date.now() - 390000 },
+  { id: uuidv4(), word: "Three", meaning: "Tuló", language: "English", targetLanguage: "Waray-Waray", category: "Numbers", createdAt: Date.now() - 380000 },
+  { id: uuidv4(), word: "Four", meaning: "Upat", language: "English", targetLanguage: "Waray-Waray", category: "Numbers", createdAt: Date.now() - 370000 },
+  { id: uuidv4(), word: "Five", meaning: "Limá", language: "English", targetLanguage: "Waray-Waray", category: "Numbers", createdAt: Date.now() - 360000 },
+
+  // Colors (a few examples)
+  { id: uuidv4(), word: "Red", meaning: "Pula", language: "English", targetLanguage: "Tagalog", category: "Colors", createdAt: Date.now() - 350000 },
+  { id: uuidv4(), word: "Blue", meaning: "Asul/Bughaw", language: "English", targetLanguage: "Tagalog", category: "Colors", createdAt: Date.now() - 340000 },
+  { id: uuidv4(), word: "Yellow", meaning: "Dilaw", language: "English", targetLanguage: "Tagalog", category: "Colors", createdAt: Date.now() - 330000 },
+  { id: uuidv4(), word: "Red", meaning: "Pula", language: "English", targetLanguage: "Bisaya", category: "Colors", createdAt: Date.now() - 320000 },
+  { id: uuidv4(), word: "Blue", meaning: "Asul/Bughaw", language: "English", targetLanguage: "Bisaya", category: "Colors", createdAt: Date.now() - 310000 },
+  { id: uuidv4(), word: "Yellow", meaning: "Dalag/Amarilyo", language: "English", targetLanguage: "Bisaya", category: "Colors", createdAt: Date.now() - 300000 },
+  { id: uuidv4(), word: "Red", meaning: "Pula", language: "English", targetLanguage: "Waray-Waray", category: "Colors", createdAt: Date.now() - 290000 },
+  { id: uuidv4(), word: "Blue", meaning: "Asul/Bughaw", language: "English", targetLanguage: "Waray-Waray", category: "Colors", createdAt: Date.now() - 280000 },
+  { id: uuidv4(), word: "Yellow", meaning: "Darag/Amarilyo", language: "English", targetLanguage: "Waray-Waray", category: "Colors", createdAt: Date.now() - 270000 },
+
+  // Days of the Week (a few examples)
+  { id: uuidv4(), word: "Monday", meaning: "Lunes", language: "English", targetLanguage: "Tagalog", category: "Days", createdAt: Date.now() - 260000 },
+  { id: uuidv4(), word: "Tuesday", meaning: "Martes", language: "English", targetLanguage: "Tagalog", category: "Days", createdAt: Date.now() - 250000 },
+  { id: uuidv4(), word: "Sunday", meaning: "Linggo", language: "English", targetLanguage: "Tagalog", category: "Days", createdAt: Date.now() - 240000 },
+  { id: uuidv4(), word: "Monday", meaning: "Lunes", language: "English", targetLanguage: "Bisaya", category: "Days", createdAt: Date.now() - 230000 },
+  { id: uuidv4(), word: "Tuesday", meaning: "Martes", language: "English", targetLanguage: "Bisaya", category: "Days", createdAt: Date.now() - 220000 },
+  { id: uuidv4(), word: "Sunday", meaning: "Dominggo", language: "English", targetLanguage: "Bisaya", category: "Days", createdAt: Date.now() - 210000 },
+  { id: uuidv4(), word: "Monday", meaning: "Lunes", language: "English", targetLanguage: "Waray-Waray", category: "Days", createdAt: Date.now() - 200000 },
+  { id: uuidv4(), word: "Tuesday", meaning: "Martes", language: "English", targetLanguage: "Waray-Waray", category: "Days", createdAt: Date.now() - 190000 },
+  { id: uuidv4(), word: "Sunday", meaning: "Dominggo", language: "English", targetLanguage: "Waray-Waray", category: "Days", createdAt: Date.now() - 180000 },
 ];
 
 
