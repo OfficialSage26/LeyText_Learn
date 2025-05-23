@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { useGlobalAppContext } from '@/hooks/useGlobalAppContext';
 import type { WordEntry, Language } from '@/types';
@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { PlusCircle, Edit, Trash2, Search, Sparkles, Loader2, MessageSquare, CornerDownLeft } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Search, Sparkles, Loader2, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
@@ -31,6 +31,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { useMounted } from '@/hooks/useMounted';
 
 const wordSchema = z.object({
   word: z.string().min(1, "Word is required"),
@@ -42,7 +43,7 @@ const wordSchema = z.object({
   category: z.string().optional(),
 }).refine(data => data.language !== data.targetLanguage, {
   message: "Source and target languages must be different.",
-  path: ["targetLanguage"], // You can point this error to a specific field
+  path: ["targetLanguage"], 
 });
 
 type WordFormData = z.infer<typeof wordSchema>;
@@ -57,6 +58,7 @@ export default function WordListsPage() {
   const [editingWord, setEditingWord] = useState<WordEntry | null>(null);
   const [isGeneratingAiSentences, setIsGeneratingAiSentences] = useState(false);
   const { toast } = useToast();
+  const { mounted } = useMounted();
 
   const form = useForm<WordFormData>({
     resolver: zodResolver(wordSchema),
@@ -70,6 +72,15 @@ export default function WordListsPage() {
       category: '',
     },
   });
+
+  useEffect(() => {
+    if (mounted) {
+      // Force reset filters on first client-side render after mount
+      // to ensure consistency with server-rendered state if filters were somehow persisted.
+      setSearchTerm('');
+      setSelectedCategory('');
+    }
+  }, [mounted]);
 
   React.useEffect(() => {
     if (isFormOpen) {
@@ -137,6 +148,7 @@ export default function WordListsPage() {
   };
   
   const filteredWords = useMemo(() => {
+    if (!mounted) return []; // Don't compute until client-side and words from context are stable
     return words
       .filter(word => {
         const searchLower = searchTerm.toLowerCase();
@@ -148,7 +160,18 @@ export default function WordListsPage() {
       })
       .filter(word => selectedCategory ? word.category === selectedCategory : true)
       .sort((a,b) => b.createdAt - a.createdAt);
-  }, [words, searchTerm, selectedCategory]);
+  }, [words, searchTerm, selectedCategory, mounted]);
+
+  if (!mounted) {
+    return (
+      <AppLayout>
+        <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <p className="ml-3 text-lg text-muted-foreground">Loading words...</p>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -209,7 +232,7 @@ export default function WordListsPage() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Word Language (Source)</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                                 <FormControl>
                                   <SelectTrigger><SelectValue placeholder="Select language" /></SelectTrigger>
                                 </FormControl>
@@ -227,7 +250,7 @@ export default function WordListsPage() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Meaning Language (Target)</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                                 <FormControl>
                                   <SelectTrigger><SelectValue placeholder="Select language" /></SelectTrigger>
                                 </FormControl>
@@ -291,7 +314,10 @@ export default function WordListsPage() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Category (Optional)</FormLabel>
-                              <FormControl><Input {...field} placeholder="e.g., Food, Travel, Common Phrases" /></FormControl>
+                              <FormControl><Input {...field} placeholder="e.g., Food, Travel, Common Phrases" list="wordlist-categories" /></FormControl>
+                              <datalist id="wordlist-categories">
+                                {categories.map(cat => <option key={`cat-opt-${cat}`} value={cat} />)}
+                              </datalist>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -329,7 +355,7 @@ export default function WordListsPage() {
             </CardContent>
           </Card>
         ) : (
-          <ScrollArea className="h-[calc(100vh-400px)] pr-3"> {/* Adjust height as needed */}
+          <ScrollArea className="h-[calc(100vh-400px)] pr-3"> 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredWords.map(word => (
                 <Card key={word.id} className="flex flex-col">
