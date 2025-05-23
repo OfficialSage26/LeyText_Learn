@@ -14,18 +14,25 @@ const initialWords: WordEntry[] = [
   { id: uuidv4(), word: "Good morning", meaning: "Magandang umaga", language: "English", targetLanguage: "Tagalog", category: "Greetings", createdAt: Date.now() - 260000 },
   { id: uuidv4(), word: "Yes", meaning: "Oo", language: "English", targetLanguage: "Tagalog", category: "Common Phrases", createdAt: Date.now() - 240000 },
   { id: uuidv4(), word: "No", meaning: "Hindi", language: "English", targetLanguage: "Tagalog", category: "Common Phrases", createdAt: Date.now() - 220000 },
+  { id: uuidv4(), word: "Eat", meaning: "Kain", language: "English", targetLanguage: "Tagalog", category: "Food", createdAt: Date.now() - 210000 },
+  { id: uuidv4(), word: "Water", meaning: "Tubig", language: "English", targetLanguage: "Tagalog", category: "Food", createdAt: Date.now() - 205000 },
+
 
   { id: uuidv4(), word: "Hello", meaning: "Kumusta", language: "English", targetLanguage: "Bisaya", category: "Greetings", createdAt: Date.now() - 200000 },
   { id: uuidv4(), word: "Thank you", meaning: "Salamat", language: "English", targetLanguage: "Bisaya", category: "Common Phrases", createdAt: Date.now() - 180000 },
   { id: uuidv4(), word: "Good morning", meaning: "Maayong buntag", language: "English", targetLanguage: "Bisaya", category: "Greetings", createdAt: Date.now() - 160000 },
   { id: uuidv4(), word: "Yes", meaning: "Oo", language: "English", targetLanguage: "Bisaya", category: "Common Phrases", createdAt: Date.now() - 140000 },
   { id: uuidv4(), word: "No", meaning: "Dili", language: "English", targetLanguage: "Bisaya", category: "Common Phrases", createdAt: Date.now() - 120000 },
+  { id: uuidv4(), word: "Eat", meaning: "Kaon", language: "English", targetLanguage: "Bisaya", category: "Food", createdAt: Date.now() - 110000 },
+  { id: uuidv4(), word: "Water", meaning: "Tubig", language: "English", targetLanguage: "Bisaya", category: "Food", createdAt: Date.now() - 105000 },
 
   { id: uuidv4(), word: "Hello", meaning: "Kumusta", language: "English", targetLanguage: "Waray-Waray", category: "Greetings", createdAt: Date.now() - 100000 },
   { id: uuidv4(), word: "Thank you", meaning: "Salamat", language: "English", targetLanguage: "Waray-Waray", category: "Common Phrases", createdAt: Date.now() - 80000 },
   { id: uuidv4(), word: "Good morning", meaning: "Maupay nga aga", language: "English", targetLanguage: "Waray-Waray", category: "Greetings", createdAt: Date.now() - 60000 },
   { id: uuidv4(), word: "Yes", meaning: "Oo", language: "English", targetLanguage: "Waray-Waray", category: "Common Phrases", createdAt: Date.now() - 40000 },
   { id: uuidv4(), word: "No", meaning: "Dire", language: "English", targetLanguage: "Waray-Waray", category: "Common Phrases", createdAt: Date.now() - 20000 },
+  { id: uuidv4(), word: "Eat", meaning: "Kaon", language: "English", targetLanguage: "Waray-Waray", category: "Food", createdAt: Date.now() - 10000 },
+  { id: uuidv4(), word: "Water", meaning: "Tubig", language: "English", targetLanguage: "Waray-Waray", category: "Food", createdAt: Date.now() - 5000 },
 ];
 
 
@@ -44,6 +51,7 @@ interface GlobalAppContextType {
   quizScores: QuizScore[];
   addQuizScore: (score: Omit<QuizScore, 'date'>) => void;
   clearWords: () => void;
+  clearQuizScores: () => void;
 }
 
 const GlobalAppContext = createContext<GlobalAppContextType | undefined>(undefined);
@@ -100,6 +108,10 @@ export function GlobalAppContextProvider({ children }: { children: ReactNode }) 
     setQuizScores(prevScores => [...prevScores, newScore]);
   }, [setQuizScores]);
 
+  const clearQuizScores = useCallback(() => {
+    setQuizScores([]);
+  }, [setQuizScores]);
+
   return (
     <GlobalAppContext.Provider value={{
       sourceLanguage,
@@ -115,7 +127,8 @@ export function GlobalAppContextProvider({ children }: { children: ReactNode }) 
       categories,
       quizScores,
       addQuizScore,
-      clearWords
+      clearWords,
+      clearQuizScores
     }}>
       {children}
     </GlobalAppContext.Provider>
@@ -123,3 +136,5 @@ export function GlobalAppContextProvider({ children }: { children: ReactNode }) 
 }
 
 export default GlobalAppContext;
+
+    
