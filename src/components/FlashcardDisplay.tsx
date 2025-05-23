@@ -32,7 +32,7 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
   }, [words, mounted]);
 
   const currentWord = useMemo(() => {
-    if (!mounted || shuffledWords.length === 0) return null;
+    if (!mounted || !shuffledWords || shuffledWords.length === 0) return null;
     return shuffledWords[currentIndex % shuffledWords.length];
   }, [shuffledWords, currentIndex, mounted]);
 
@@ -81,8 +81,6 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
   }
 
   if (!currentWord) {
-     // This case should ideally be covered by the loading state or "No words" card
-     // but it's a good safety net if shuffledWords is empty after mount for some reason
     return (
         <div className="w-full max-w-xl mx-auto flex flex-col items-center justify-center h-80">
             <Info className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
@@ -141,7 +139,7 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
 
         {/* Back of the card */}
         <Card className="absolute w-full h-full backface-hidden rotate-y-180 bg-accent text-accent-foreground flex flex-col items-center justify-center p-6 text-center">
-          <CardContent className="flex flex-col items-center justify-center w-full">
+          <CardContent className="flex flex-col items-center justify-center w-full rotate-y-180"> {/* Added rotate-y-180 here */}
             <p className="text-xs text-accent-foreground/80 mb-2">{currentWord.targetLanguage}</p>
             <h3 className="text-3xl font-semibold mb-3">{currentWord.meaning}</h3>
             {currentWord.userSentence && <p className="text-sm italic mb-2">"{currentWord.userSentence}"</p>}
@@ -185,4 +183,3 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
     </div>
   );
 }
-
