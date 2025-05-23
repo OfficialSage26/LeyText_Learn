@@ -33,6 +33,12 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
 
   const currentWord = useMemo(() => {
     if (!mounted || !shuffledWords || shuffledWords.length === 0) return null;
+    // Ensure currentIndex is always valid, even if shuffledWords length changes abruptly
+    const newIndex = currentIndex % (shuffledWords.length || 1); 
+    if (currentIndex !== newIndex && shuffledWords.length > 0) { // Correct index if it became out of bounds
+        setCurrentIndex(newIndex);
+        return shuffledWords[newIndex];
+    }
     return shuffledWords[currentIndex % shuffledWords.length];
   }, [shuffledWords, currentIndex, mounted]);
 
@@ -43,7 +49,7 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
   };
 
   const handlePrev = () => {
-    setCurrentIndex((prev) => (prev - 1 + shuffledWords.length) % shuffledWords.length);
+    setCurrentIndex((prev) => (prev - 1 + (shuffledWords.length || 1)) % (shuffledWords.length || 1));
     setIsFlipped(false);
     setShowPronunciation(false);
   };
@@ -139,18 +145,20 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
 
         {/* Back of the card */}
         <Card className="absolute w-full h-full backface-hidden rotate-y-180 bg-accent text-accent-foreground flex flex-col items-center justify-center p-6 text-center">
-          <CardContent className="flex flex-col items-center justify-center w-full rotate-y-180"> {/* Added rotate-y-180 here */}
-            <p className="text-xs text-accent-foreground/80 mb-2">{currentWord.targetLanguage}</p>
-            <h3 className="text-3xl font-semibold mb-3">{currentWord.meaning}</h3>
-            {currentWord.userSentence && <p className="text-sm italic mb-2">"{currentWord.userSentence}"</p>}
-            {currentWord.aiSentences && currentWord.aiSentences.length > 0 && (
-              <div className="text-xs mt-2 text-accent-foreground/80">
-                <p className="font-medium mb-1">AI Examples (in {currentWord.language}):</p>
-                <ul className="list-disc list-inside space-y-0.5 max-h-24 overflow-y-auto">
-                  {currentWord.aiSentences.map((s, i) => <li key={i}><em>{s}</em></li>)}
-                </ul>
-              </div>
-            )}
+          <CardContent className="flex flex-col items-center justify-center w-full"> {/* No rotation here */}
+            <div className="rotate-y-180"> {/* Content is wrapped and counter-rotated */}
+              <p className="text-xs text-accent-foreground/80 mb-2">{currentWord.targetLanguage}</p>
+              <h3 className="text-3xl font-semibold mb-3">{currentWord.meaning}</h3>
+              {currentWord.userSentence && <p className="text-sm italic mb-2">"{currentWord.userSentence}"</p>}
+              {currentWord.aiSentences && currentWord.aiSentences.length > 0 && (
+                <div className="text-xs mt-2 text-accent-foreground/80">
+                  <p className="font-medium mb-1">AI Examples (in {currentWord.language}):</p>
+                  <ul className="list-disc list-inside space-y-0.5 max-h-24 overflow-y-auto">
+                    {currentWord.aiSentences.map((s, i) => <li key={i}><em>{s}</em></li>)}
+                  </ul>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -167,7 +175,7 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
           <ArrowLeft className="mr-2 h-4 w-4" /> Prev
         </Button>
         <p className="text-sm text-muted-foreground" aria-live="polite">
-          Card {shuffledWords.length > 0 ? (currentIndex % shuffledWords.length) + 1 : 0} of {shuffledWords.length}
+          Card {shuffledWords.length > 0 ? (currentIndex % (shuffledWords.length || 1)) + 1 : 0} of {shuffledWords.length}
         </p>
         <Button variant="outline" onClick={handleNext} aria-label="Next card" disabled={shuffledWords.length <= 1}>
           Next <ArrowRight className="ml-2 h-4 w-4" />
@@ -183,3 +191,4 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
     </div>
   );
 }
+
