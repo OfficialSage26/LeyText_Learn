@@ -104,7 +104,7 @@ export default function LearningPathPage() {
                 <p id={`unit-lessons-${unit.id}`} className="text-sm text-muted-foreground">Contains approximately {unit.lessons} lessons.</p>
               </CardContent>
               <CardFooter>
-                {unit.id === "unit1" || unit.id === "unit2" || unit.id === "unit3" ? ( // Enable first few units
+                {unit.id === "unit1" || unit.id === "unit2" || unit.id === "unit3" || unit.id === "unit4" ? ( 
                   <Button asChild className="w-full">
                     <Link href={`/learn/path/unit/${unit.id}`}>
                       <Star className="mr-2 h-4 w-4" /> Start Unit {index + 1}

@@ -7,7 +7,7 @@ import { useGlobalAppContext } from '@/hooks/useGlobalAppContext';
 import { generateExampleSentences } from '@/ai/flows/generate-example-sentences';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Sparkles, Loader2, ChevronRight, BookOpenText, Info } from 'lucide-react';
+import { ArrowLeft, Sparkles, Loader2, ChevronRight, BookOpenText, Info, Briefcase } from 'lucide-react';
 import Link from 'next/link';
 import type { WordEntry, Language } from '@/types';
 import { useToast } from '@/hooks/use-toast';
@@ -18,7 +18,7 @@ const unitsData: { [key: string]: { title: string; description: string; icon: Re
   unit1: { title: "Unit 1: Foundations", description: "Learning basic greetings and phrases.", icon: BookOpenText },
   unit2: { title: "Unit 2: Everyday Greetings & Introductions", description: "Master common greetings, introductions, and essential polite phrases.", icon: BookOpenText },
   unit3: { title: "Unit 3: People & Family", description: "Talk about yourself, family members, and describe people.", icon: BookOpenText },
-  unit4: { title: "Unit 4: Basic Verbs & Actions", description: "Learn essential verbs and how to form simple sentences about actions.", icon: BookOpenText },
+  unit4: { title: "Unit 4: Basic Verbs & Actions", description: "Learn essential verbs and how to form simple sentences about actions.", icon: Briefcase },
 };
 
 interface UnitLessonConfig {
@@ -44,6 +44,11 @@ const unitLessonData: { [key: string]: UnitLessonConfig } = {
     categories: ["Family"],
     lessonDescription: "Learn vocabulary related to family members in {LANGUAGE}."
   },
+  unit4: {
+    lessonTitle: "Lesson 1: Basic Verbs",
+    categories: ["Verbs"],
+    lessonDescription: "Learn essential verbs in {LANGUAGE} and see how they are used."
+  }
 };
 
 interface LessonWordDisplay extends WordEntry {
