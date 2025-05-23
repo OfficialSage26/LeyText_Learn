@@ -146,7 +146,8 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
         {/* Back of the card */}
         <Card className="absolute w-full h-full backface-hidden rotate-y-180 bg-accent text-accent-foreground p-6 text-center">
           <CardContent className="flex flex-col items-center justify-center w-full h-full p-0">
-            <div className="rotate-y-180">
+            {/* The content here should appear normal as the parent Card is already rotated */}
+            <div> 
               <p className="text-xs text-accent-foreground/80 mb-2">{currentWord.targetLanguage}</p>
               <h3 className="text-3xl font-semibold mb-3">{currentWord.meaning}</h3>
               {currentWord.userSentence && <p className="text-sm italic mb-2">"{currentWord.userSentence}"</p>}
@@ -191,4 +192,3 @@ export default function FlashcardDisplay({ words }: FlashcardDisplayProps) {
     </div>
   );
 }
-
