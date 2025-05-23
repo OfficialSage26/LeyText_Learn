@@ -10,18 +10,18 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import LanguageSelector from '@/components/LanguageSelector'; // Re-use for consistency
+import LanguageSelector from '@/components/LanguageSelector'; 
+import { BarChart, Info } from 'lucide-react';
 
 const ALL_CATEGORIES_OPTION_VALUE = "__ALL_CATEGORIES__";
 
 export default function QuizzesPage() {
-  const { words, categories, sourceLanguage, targetLanguage, addQuizScore } = useGlobalAppContext();
-  const [selectedCategory, setSelectedCategory] = useState<string>(''); // Empty string means all categories
+  const { words, categories, sourceLanguage, targetLanguage, addQuizScore, quizScores } = useGlobalAppContext();
+  const [selectedCategory, setSelectedCategory] = useState<string>(''); 
   const [quizInProgress, setQuizInProgress] = useState(false);
   const { toast } = useToast();
 
   const wordsForQuiz = useMemo(() => {
-    // Quiz words should be based on the selected source language, for translation to target language
     return words.filter(word => 
       word.language === sourceLanguage && 
       word.targetLanguage === targetLanguage &&
@@ -30,7 +30,7 @@ export default function QuizzesPage() {
   }, [words, sourceLanguage, targetLanguage, selectedCategory]);
 
   const handleStartQuiz = () => {
-    if (wordsForQuiz.length < 4) { // Minimum options for a question
+    if (wordsForQuiz.length < 4) { 
       toast({
         title: "Not Enough Words",
         description: `You need at least 4 words in ${sourceLanguage} (for category: ${selectedCategory || 'All'}) to start a quiz.`,
@@ -43,7 +43,7 @@ export default function QuizzesPage() {
 
   const handleQuizComplete = (score: number, totalQuestions: number) => {
     addQuizScore({
-      language: sourceLanguage, // Quiz was based on source language words
+      language: sourceLanguage, 
       category: selectedCategory || undefined,
       score,
       totalQuestions,
@@ -125,7 +125,26 @@ export default function QuizzesPage() {
           </CardContent>
         </Card>
 
-        {/* Optionally, display past quiz scores or stats here */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl font-semibold flex items-center">
+              <BarChart className="mr-3 h-6 w-6 text-primary" />
+              Quiz Statistics
+            </CardTitle>
+            <CardDescription>
+              Review your past performance and track your progress.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <Info className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">
+              Your past quiz scores and detailed statistics will be displayed here soon!
+            </p>
+            {quizScores.length > 0 && (
+                 <p className="text-sm text-muted-foreground mt-2">You have {quizScores.length} saved quiz attempt(s).</p>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </AppLayout>
   );

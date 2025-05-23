@@ -1,13 +1,13 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo, use } from 'react'; 
+import React, { useState, useEffect, use } from 'react'; 
 import AppLayout from '@/components/layout/AppLayout';
 import { useGlobalAppContext } from '@/hooks/useGlobalAppContext';
 import { generateExampleSentences } from '@/ai/flows/generate-example-sentences';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Sparkles, Loader2, ChevronRight, BookOpenText } from 'lucide-react';
+import { ArrowLeft, Sparkles, Loader2, ChevronRight, BookOpenText, Info } from 'lucide-react';
 import Link from 'next/link';
 import type { WordEntry, Language } from '@/types';
 import { useToast } from '@/hooks/use-toast';
@@ -16,7 +16,9 @@ import { SUPPORTED_LANGUAGES } from '@/types';
 // Placeholder for unit data - in a real app, this might come from a CMS or a more complex data structure
 const unitsData: { [key: string]: { title: string; description: string; } } = {
   unit1: { title: "Unit 1: Foundations", description: "Learning basic greetings and phrases." },
-  // Add other units here if needed
+  unit2: { title: "Unit 2: Everyday Greetings & Introductions", description: "Master common greetings, introductions, and essential polite phrases." },
+  unit3: { title: "Unit 3: People & Family", description: "Talk about yourself, family members, and describe people." },
+  unit4: { title: "Unit 4: Basic Verbs & Actions", description: "Learn essential verbs and how to form simple sentences about actions." },
 };
 
 interface GreetingDisplay extends WordEntry {
@@ -33,7 +35,7 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
 
   const [greetings, setGreetings] = useState<GreetingDisplay[]>([]);
 
-  const unitInfo = unitsData[unitId] || { title: "Unknown Unit", description: "Content not found." };
+  const unitInfo = unitsData[unitId] || { title: `Unit ${unitId.replace('unit','')}`, description: "Content for this unit is under development." };
 
   useEffect(() => {
     if (unitId === 'unit1' && learningLanguage) {
@@ -75,6 +77,9 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
           }));
       }
       setGreetings(relevantDisplayGreetings.slice(0, 5)); 
+    } else {
+      // Clear greetings if not unit1 or no learning language
+      setGreetings([]);
     }
   }, [unitId, learningLanguage, globalSourceLanguage, allWords]);
 
@@ -102,13 +107,25 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
     return (
       <AppLayout>
         <div className="text-center py-10">
-          <h1 className="text-3xl font-bold mb-4">Content Coming Soon!</h1>
-          <p className="text-muted-foreground mb-8">This unit ({unitInfo.title}) is currently under development.</p>
-          <Button asChild variant="outline">
-            <Link href="/learn/path">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Learning Path
-            </Link>
-          </Button>
+           <Card className="max-w-md mx-auto shadow-lg">
+            <CardHeader>
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Info className="w-12 h-12 text-primary" />
+                <CardTitle className="text-2xl sm:text-3xl font-bold">{unitInfo.title}</CardTitle>
+              </div>
+              <CardDescription className="text-lg">Learning {learningLanguage}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-8">
+                Detailed lessons and activities for this unit are currently under development. Please check back soon!
+              </p>
+              <Button asChild variant="outline">
+                <Link href="/learn/path">
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Back to Learning Path
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </AppLayout>
     );

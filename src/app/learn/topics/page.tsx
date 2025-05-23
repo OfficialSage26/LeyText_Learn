@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, BookOpen, Users, Utensils, MapPin, Users2, Clock, Lightbulb, ShoppingCart, Building2, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useGlobalAppContext } from '@/hooks/useGlobalAppContext';
-import { slugify } from '@/lib/utils'; // We'll create this utility
+import { slugify } from '@/lib/utils'; 
 
 const sampleTopics = [
   { name: "Greetings & Introductions", icon: Users, dataAiHint: "handshake people", ariaLabel: "Explore Greetings and Introductions topic", category: "Greetings" },
@@ -24,7 +24,8 @@ const sampleTopics = [
 export default function ExploreTopicsPage() {
   const { targetLanguage } = useGlobalAppContext();
 
-  const activeTopics = ["Greetings", "Food"]; // Categories that are currently active
+  // Categories that are currently active and will have clickable links
+  const activeTopics = ["Greetings", "Food", "Travel", "Family"]; 
 
   return (
     <AppLayout>
@@ -50,6 +51,7 @@ export default function ExploreTopicsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {sampleTopics.map((topic) => {
             const topicSlug = slugify(topic.category || topic.name);
+            // Check if the topic's category is in the activeTopics array
             const isTopicActive = activeTopics.includes(topic.category || topic.name);
 
             return (

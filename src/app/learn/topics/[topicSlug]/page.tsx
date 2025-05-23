@@ -23,7 +23,12 @@ const topicDetails: { [key: string]: { displayName: string; category: string } }
   'greetings': { displayName: "Greetings & Introductions", category: "Greetings" },
   'food': { displayName: "Food & Dining", category: "Food" },
   'travel': { displayName: "Travel & Directions", category: "Travel" },
-  // Add more mappings as needed
+  'family': { displayName: "Family & Relationships", category: "Family" },
+  'numbers': { displayName: "Numbers & Time", category: "Numbers" },
+  'verbs': { displayName: "Common Verbs", category: "Verbs" },
+  'shopping': { displayName: "Shopping", category: "Shopping" },
+  'work': { displayName: "Work & School", category: "Work" },
+  // Add more mappings as needed, ensure slug matches slugify(category) from topics/page.tsx
 };
 
 export default function TopicPage({ params: paramsPromise }: { params: { topicSlug: string } }) {
@@ -102,7 +107,7 @@ export default function TopicPage({ params: paramsPromise }: { params: { topicSl
     const specificWord = topicWords[wordIndex];
     if (!specificWord) return;
 
-    setTopicWords(prev => prev.map((w, idx) => idx === wordIndex ? { ...w, isLoadingExamples: true } : w)); // Corrected g to w
+    setTopicWords(prev => prev.map((w, idx) => idx === wordIndex ? { ...w, isLoadingExamples: true } : w)); 
 
     try {
       const result = await generateExampleSentences({

@@ -4,7 +4,7 @@
 import AppLayout from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Zap } from 'lucide-react';
+import { ArrowLeft, Zap, Construction } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useGlobalAppContext } from '@/hooks/useGlobalAppContext';
@@ -30,7 +30,7 @@ export default function PracticeChallengesPage() {
                 </Button>
             </div>
             <CardDescription className="text-base sm:text-lg mt-4">
-              Test your {targetLanguage} skills with interactive exercises, quizzes, and real-world scenarios.
+              Test your {targetLanguage} skills with interactive exercises, quizzes, and real-world scenarios. This section is under construction, but exciting challenges are planned!
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
@@ -44,10 +44,10 @@ export default function PracticeChallengesPage() {
                 data-ai-hint="game puzzle achievement"
               />
             </div>
+            <Construction className="w-16 h-16 text-accent mx-auto mb-4" />
             <p className="text-muted-foreground text-lg sm:text-xl mb-8">
-              Engaging challenges and skill-testing activities will be available soon!
+              Engaging challenges and skill-testing activities are being developed and will be available soon! Get ready to put your {targetLanguage} knowledge to the test.
             </p>
-            {/* The Back to Learn Menu button is now in the header for this page layout */}
           </CardContent>
         </Card>
       </div>
