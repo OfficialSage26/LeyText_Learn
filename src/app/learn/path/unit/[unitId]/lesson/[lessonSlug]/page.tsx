@@ -80,7 +80,7 @@ export default function LessonPage({ params: paramsPromise }: { params: { unitId
             isLoadingExamples: false,
           }));
       }
-      setLessonWords(relevantLessonWords.slice(0, 15)); // Limit words per lesson for now
+      setLessonWords(relevantLessonWords.slice(0, 30)); // Increased word limit
     } else {
       setLessonWords([]);
     }
