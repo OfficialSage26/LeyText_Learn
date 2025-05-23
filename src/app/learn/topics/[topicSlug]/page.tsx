@@ -11,7 +11,7 @@ import { ArrowLeft, Sparkles, Loader2, Info, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import type { WordEntry } from '@/types';
 import { useToast } from '@/hooks/use-toast';
-import { deslugify } from '@/lib/utils'; // We'll create this utility
+import { deslugify } from '@/lib/utils'; 
 
 interface TopicWordDisplay extends WordEntry {
   aiExamples?: string[];
@@ -79,10 +79,21 @@ export default function TopicPage({ params: paramsPromise }: { params: { topicSl
         }));
       
       // Combine and remove duplicates (e.g., if English->Tagalog and Tagalog->English for same concept exists)
+      // Prioritize words where the 'word' field is in the learningLanguage
       const combined = [...wordsInLearningLanguage, ...wordsFromLearningLanguage];
-      const uniqueWords = Array.from(new Map(combined.map(item => [item.word.toLowerCase() + '-' + item.language, item])).values());
+      const uniqueWordsMap = new Map<string, TopicWordDisplay>();
 
-      setTopicWords(uniqueWords.slice(0, 10)); // Limit to 10 for display
+      combined.forEach(item => {
+        const key = item.language === learningLanguage ? item.word.toLowerCase() : item.meaning.toLowerCase();
+         // If the word in the learning language is not yet in the map OR 
+         // if the current item is more directly representative of the learning language
+        if (!uniqueWordsMap.has(key) || (item.language === learningLanguage && uniqueWordsMap.get(key)?.language !== learningLanguage)) {
+          uniqueWordsMap.set(key, item);
+        }
+      });
+      
+      const uniqueWords = Array.from(uniqueWordsMap.values());
+      setTopicWords(uniqueWords.slice(0, 15)); // Limit to 15 for display
     }
     setIsLoading(false);
   }, [learningLanguage, meaningLanguage, allWords, currentTopic.category]);
@@ -91,7 +102,7 @@ export default function TopicPage({ params: paramsPromise }: { params: { topicSl
     const specificWord = topicWords[wordIndex];
     if (!specificWord) return;
 
-    setTopicWords(prev => prev.map((w, idx) => idx === wordIndex ? { ...w, isLoadingExamples: true } : g));
+    setTopicWords(prev => prev.map((w, idx) => idx === wordIndex ? { ...w, isLoadingExamples: true } : w)); // Corrected g to w
 
     try {
       const result = await generateExampleSentences({
@@ -107,13 +118,12 @@ export default function TopicPage({ params: paramsPromise }: { params: { topicSl
     }
   };
 
-  if (!topicDetails[topicSlug] && topicSlug !== 'greetings-introductions') { // Allow greetings-introductions as a fallback
-     // A more robust check or data source for valid topics would be better
+  if (!topicDetails[topicSlug]) { 
     return (
       <AppLayout>
         <div className="text-center py-10">
           <h1 className="text-3xl font-bold mb-4">Topic Not Found</h1>
-          <p className="text-muted-foreground mb-8">The topic "{deslugify(topicSlug)}" does not have specific content yet.</p>
+          <p className="text-muted-foreground mb-8">The topic "{deslugify(topicSlug)}" does not have specific content yet or is not a recognized topic slug.</p>
           <Button asChild variant="outline">
             <Link href="/learn/topics">
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Topics
@@ -132,7 +142,7 @@ export default function TopicPage({ params: paramsPromise }: { params: { topicSl
           <div className="flex-grow">
             <div className="flex items-start sm:items-center gap-3 mb-2">
               <BookOpen className="w-10 h-10 text-primary flex-shrink-0 mt-1 sm:mt-0" />
-              <CardTitle className="text-2xl sm:text-3xl lg:text-4xl font-bold">
+              <CardTitle className="text-2xl sm:text-3xl lg:text-4xl font-bold" aria-label={`Topic: ${currentTopic.displayName}`}>
                 Topic: {currentTopic.displayName}
               </CardTitle>
             </div>
@@ -166,7 +176,7 @@ export default function TopicPage({ params: paramsPromise }: { params: { topicSl
                 <h3 className="text-xl font-semibold">No words found for this topic.</h3>
                 <p className="text-muted-foreground">
                   Try adding words to your Word List under the category "{currentTopic.category}" 
-                  with {learningLanguage} as the target language.
+                  with {learningLanguage} as the target language (and {meaningLanguage} as the source/meaning language, or vice versa).
                 </p>
               </div>
             ) : (

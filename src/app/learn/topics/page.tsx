@@ -24,6 +24,8 @@ const sampleTopics = [
 export default function ExploreTopicsPage() {
   const { targetLanguage } = useGlobalAppContext();
 
+  const activeTopics = ["Greetings", "Food"]; // Categories that are currently active
+
   return (
     <AppLayout>
       <div className="space-y-8">
@@ -31,7 +33,7 @@ export default function ExploreTopicsPage() {
           <div>
             <div className="flex items-start sm:items-center gap-3 mb-2">
               <BookOpen className="w-10 h-10 text-primary flex-shrink-0 mt-1 sm:mt-0" />
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Explore {targetLanguage} Topics</h1>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold" aria-label={`Explore ${targetLanguage} Topics`}>Explore {targetLanguage} Topics</h1>
             </div>
             <p className="text-base sm:text-lg text-muted-foreground">
               Dive into specific themes to expand your {targetLanguage} vocabulary and understanding. Select a topic to begin.
@@ -47,13 +49,14 @@ export default function ExploreTopicsPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {sampleTopics.map((topic) => {
-            const topicSlug = slugify(topic.category || topic.name); // Use category for slug if available
-            const isGreetingsTopic = topic.name === "Greetings & Introductions"; // Example to make one topic active
+            const topicSlug = slugify(topic.category || topic.name);
+            const isTopicActive = activeTopics.includes(topic.category || topic.name);
 
             return (
               <Card 
                 key={topic.name} 
                 className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 group flex flex-col"
+                aria-label={topic.ariaLabel}
               >
                 <CardHeader className="pb-3 flex-grow">
                   <div className="flex flex-col items-center text-center h-full">
@@ -67,8 +70,8 @@ export default function ExploreTopicsPage() {
                   </p>
                 </CardContent>
                 <CardFooter className="pt-3 mt-auto">
-                  {isGreetingsTopic ? (
-                    <Button asChild className="w-full text-primary group-hover:bg-primary/10" variant="default">
+                  {isTopicActive ? (
+                    <Button asChild className="w-full group-hover:bg-primary/90" variant="default">
                       <Link href={`/learn/topics/${topicSlug}`}>
                         Explore Topic <ChevronRight className="ml-2 h-4 w-4" />
                       </Link>
