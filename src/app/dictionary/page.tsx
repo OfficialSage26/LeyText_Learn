@@ -4,25 +4,35 @@
 import React, { useState, useMemo } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { useGlobalAppContext } from '@/hooks/useGlobalAppContext';
-import type { WordEntry } from '@/types';
+import type { WordEntry, Language } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import LanguageSelector from '@/components/LanguageSelector';
-import { BookMarked, Search, MessageSquare } from 'lucide-react';
+import { BookMarked, Search, MessageSquare, Sparkles, Loader2, BookText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { fetchTatoebaSentences, type FetchTatoebaSentencesOutput } from '@/ai/flows/fetch-tatoeba-sentences-flow';
 
 const ALL_CATEGORIES_OPTION_VALUE = "__ALL_CATEGORIES__";
+
+interface TatoebaSentenceState {
+  isLoading: boolean;
+  sentences: FetchTatoebaSentencesOutput['sentences'] | null;
+  error: string | null;
+}
 
 export default function DictionaryPage() {
   const { words, categories, sourceLanguage, targetLanguage } = useGlobalAppContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const { toast } = useToast();
+  const [tatoebaExamples, setTatoebaExamples] = useState<Record<string, TatoebaSentenceState>>({});
 
   const filteredWords = useMemo(() => {
     return words
       .filter(word => {
-        // Filter by selected source and target languages for the dictionary view
         return word.language === sourceLanguage && word.targetLanguage === targetLanguage;
       })
       .filter(word => {
@@ -35,8 +45,56 @@ export default function DictionaryPage() {
           word.pronunciation?.toLowerCase().includes(searchLower);
         return categoryMatch && termMatch;
       })
-      .sort((a, b) => a.word.localeCompare(b.word)); // Sort alphabetically by word
+      .sort((a, b) => a.word.localeCompare(b.word));
   }, [words, searchTerm, selectedCategory, sourceLanguage, targetLanguage]);
+
+  const handleFetchTatoebaExamples = async (wordEntry: WordEntry) => {
+    if (tatoebaExamples[wordEntry.id]?.sentences) { // Already fetched
+        // Toggle visibility or simply do nothing if already visible
+        if (tatoebaExamples[wordEntry.id]?.isLoading === false) return; 
+    }
+
+    setTatoebaExamples(prev => ({
+      ...prev,
+      [wordEntry.id]: { isLoading: true, sentences: null, error: null }
+    }));
+
+    try {
+      const result = await fetchTatoebaSentences({
+        word: wordEntry.word,
+        sourceLanguage: wordEntry.language,
+        targetLanguage: wordEntry.targetLanguage,
+      });
+      
+      if (result.sentences && result.sentences.length > 0) {
+        setTatoebaExamples(prev => ({
+          ...prev,
+          [wordEntry.id]: { isLoading: false, sentences: result.sentences, error: null }
+        }));
+      } else {
+        setTatoebaExamples(prev => ({
+          ...prev,
+          [wordEntry.id]: { isLoading: false, sentences: [], error: "No example sentences found on Tatoeba." }
+        }));
+        toast({
+          title: "Tatoeba Examples",
+          description: `No example sentences found for "${wordEntry.word}".`,
+          variant: "default",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching Tatoeba examples:", error);
+      setTatoebaExamples(prev => ({
+        ...prev,
+        [wordEntry.id]: { isLoading: false, sentences: null, error: "Could not load Tatoeba examples." }
+      }));
+      toast({
+        title: "Error",
+        description: "Could not load Tatoeba examples.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <AppLayout>
@@ -113,7 +171,7 @@ export default function DictionaryPage() {
               <CardDescription>Displaying words in {sourceLanguage} with their {targetLanguage} meanings.</CardDescription>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-[calc(100vh-550px)] sm:h-[calc(100vh-500px)] pr-3"> {/* Adjust height as needed */}
+              <ScrollArea className="h-[calc(100vh-550px)] sm:h-[calc(100vh-500px)] pr-3">
                 <div className="space-y-4">
                   {filteredWords.map(word => (
                     <Card key={word.id} className="p-4 shadow-sm">
@@ -124,18 +182,51 @@ export default function DictionaryPage() {
                         </div>
                         {word.category && <span className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-full whitespace-nowrap">{word.category}</span>}
                       </div>
-                      <div className="mt-2">
+                      <div className="mt-2 space-y-1">
                         <p><strong className="font-medium">Meaning ({word.targetLanguage}):</strong> {word.meaning}</p>
                         {word.pronunciation && <p className="text-sm"><strong className="font-medium">Pronunciation:</strong> {word.pronunciation}</p>}
                         {word.userSentence && <p className="text-sm italic"><strong className="font-medium">Example:</strong> "{word.userSentence}"</p>}
                          {word.aiSentences && word.aiSentences.length > 0 && (
                           <div className="mt-2 pt-2 border-t border-dashed">
-                            <p className="font-medium text-xs mb-1">AI Examples ({word.language}):</p>
+                            <p className="font-medium text-xs mb-1 flex items-center gap-1"><Sparkles size={14} className="text-primary"/>AI Examples ({word.language}):</p>
                             <ul className="list-disc list-inside text-xs space-y-0.5 text-muted-foreground">
-                              {word.aiSentences.map((s, i) => <li key={i}><em>{s}</em></li>)}
+                              {word.aiSentences.map((s, i) => <li key={`ai-ex-${i}`}><em>{s}</em></li>)}
                             </ul>
                           </div>
                         )}
+                        
+                        <div className="mt-3 pt-3 border-t">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleFetchTatoebaExamples(word)}
+                                disabled={tatoebaExamples[word.id]?.isLoading}
+                                className="w-full sm:w-auto"
+                            >
+                                {tatoebaExamples[word.id]?.isLoading ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                    <BookText className="mr-2 h-4 w-4" />
+                                )}
+                                {tatoebaExamples[word.id]?.sentences ? 'Hide' : 'Show'} Tatoeba Sentences
+                            </Button>
+
+                            {tatoebaExamples[word.id]?.sentences && tatoebaExamples[word.id]!.sentences!.length > 0 && (
+                                <div className="mt-2 space-y-2 text-xs text-muted-foreground">
+                                    <h5 className="font-medium text-primary">Tatoeba Examples:</h5>
+                                    {tatoebaExamples[word.id]!.sentences!.map((ex, i) => (
+                                        <div key={`tatoeba-${word.id}-${i}`} className="p-2 border rounded-md bg-muted/30">
+                                            <p><strong>{ex.sourceLang}:</strong> <em>{ex.sourceText}</em></p>
+                                            <p><strong>{ex.targetLang}:</strong> <em>{ex.targetText}</em></p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            {tatoebaExamples[word.id]?.error && (
+                                <p className="text-xs text-destructive mt-1">{tatoebaExamples[word.id]?.error}</p>
+                            )}
+                        </div>
+
                       </div>
                     </Card>
                   ))}
