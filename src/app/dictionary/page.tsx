@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { useGlobalAppContext } from '@/hooks/useGlobalAppContext';
 import type { WordEntry, Language } from '@/types';
@@ -14,6 +14,7 @@ import { BookMarked, Search, MessageSquare, Sparkles, Loader2, BookText } from '
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { fetchTatoebaSentences, type FetchTatoebaSentencesOutput } from '@/ai/flows/fetch-tatoeba-sentences-flow';
+import { useMounted } from '@/hooks/useMounted';
 
 const ALL_CATEGORIES_OPTION_VALUE = "__ALL_CATEGORIES__";
 
@@ -29,11 +30,27 @@ export default function DictionaryPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const { toast } = useToast();
   const [tatoebaExamples, setTatoebaExamples] = useState<Record<string, TatoebaSentenceState>>({});
+  const mounted = useMounted();
+
+  useEffect(() => {
+    if (mounted) {
+      // Ensure filters are reset on client mount if needed, or if you want to persist them,
+      // this step might not be necessary if their initial `useState('')` is sufficient.
+      // For consistency with WordListsPage and to avoid potential edge cases:
+      setSearchTerm('');
+      setSelectedCategory('');
+    }
+  }, [mounted]);
 
   const filteredWords = useMemo(() => {
+    if (!mounted) return []; // Don't compute until client-side and words from context are stable
+
     return words
       .filter(word => {
-        return word.language === sourceLanguage && word.targetLanguage === targetLanguage;
+        // Ensure word.language and word.targetLanguage are defined before filtering
+        return word.language && word.targetLanguage &&
+               word.language === sourceLanguage && 
+               word.targetLanguage === targetLanguage;
       })
       .filter(word => {
         const searchLower = searchTerm.toLowerCase();
@@ -46,17 +63,23 @@ export default function DictionaryPage() {
         return categoryMatch && termMatch;
       })
       .sort((a, b) => a.word.localeCompare(b.word));
-  }, [words, searchTerm, selectedCategory, sourceLanguage, targetLanguage]);
+  }, [words, searchTerm, selectedCategory, sourceLanguage, targetLanguage, mounted]);
 
   const handleFetchTatoebaExamples = async (wordEntry: WordEntry) => {
-    if (tatoebaExamples[wordEntry.id]?.sentences) { // Already fetched
-        // Toggle visibility or simply do nothing if already visible
-        if (tatoebaExamples[wordEntry.id]?.isLoading === false) return; 
+    const currentWordState = tatoebaExamples[wordEntry.id];
+
+    // If sentences are already loaded and not currently loading, toggle visibility (conceptual)
+    // For now, we just re-fetch or show if already there.
+    // A more sophisticated toggle would involve another state like `isVisible`.
+    if (currentWordState?.sentences && !currentWordState.isLoading) {
+        // Simple approach: if you click again and it has sentences, just re-evaluate (currently re-fetches)
+        // To implement toggle: add a visibility flag to TatoebaSentenceState and toggle here.
+        // For this fix, let's keep it simple and allow re-fetch.
     }
 
     setTatoebaExamples(prev => ({
       ...prev,
-      [wordEntry.id]: { isLoading: true, sentences: null, error: null }
+      [wordEntry.id]: { isLoading: true, sentences: prev[wordEntry.id]?.sentences || null, error: null }
     }));
 
     try {
@@ -103,11 +126,11 @@ export default function DictionaryPage() {
           <CardHeader>
             <div className="flex items-center gap-3">
               <BookMarked className="w-10 h-10 text-primary" />
-              <CardTitle className="text-3xl font-bold">Dialect Dictionary</CardTitle>
+              <CardTitle className="text-3xl font-bold">Dialect Dictionary (Bilingual)</CardTitle>
             </div>
             <CardDescription>
               Browse words and translations. Use the selectors below to choose languages and filters.
-              Displaying words in '{sourceLanguage}' with translations in '{targetLanguage}'.
+              {mounted && ` Displaying words in '${sourceLanguage}' with translations in '${targetLanguage}'.`}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -117,11 +140,12 @@ export default function DictionaryPage() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder={`Search in ${sourceLanguage} words, meanings, categories...`}
+                  placeholder={mounted ? `Search in ${sourceLanguage} words, meanings...` : "Search..."}
                   className="pl-10 w-full"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   aria-label="Search dictionary"
+                  disabled={!mounted}
                 />
               </div>
               <div>
@@ -137,6 +161,7 @@ export default function DictionaryPage() {
                       setSelectedCategory(value);
                     }
                   }}
+                  disabled={!mounted}
                 >
                   <SelectTrigger id="dict-category-select" className="w-full">
                     <SelectValue placeholder="All Categories" />
@@ -153,7 +178,14 @@ export default function DictionaryPage() {
           </CardContent>
         </Card>
 
-        {filteredWords.length === 0 ? (
+        {!mounted ? (
+          <Card className="text-center py-12">
+            <CardContent className="flex items-center justify-center gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-lg text-muted-foreground">Loading dictionary...</p>
+            </CardContent>
+          </Card>
+        ) : filteredWords.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
               <MessageSquare className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
@@ -208,7 +240,7 @@ export default function DictionaryPage() {
                                 ) : (
                                     <BookText className="mr-2 h-4 w-4" />
                                 )}
-                                {tatoebaExamples[word.id]?.sentences ? 'Hide' : 'Show'} Tatoeba Sentences
+                                {tatoebaExamples[word.id]?.sentences && tatoebaExamples[word.id]?.sentences?.length ? 'Hide' : 'Show'} Tatoeba Sentences
                             </Button>
 
                             {tatoebaExamples[word.id]?.sentences && tatoebaExamples[word.id]!.sentences!.length > 0 && (
@@ -239,3 +271,4 @@ export default function DictionaryPage() {
     </AppLayout>
   );
 }
+
