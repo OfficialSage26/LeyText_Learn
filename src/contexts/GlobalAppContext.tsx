@@ -9,30 +9,54 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { v4 as uuidv4 } from 'uuid'; // For generating unique IDs
 
 const initialWords: WordEntry[] = [
+  // Greetings
   { id: uuidv4(), word: "Hello", meaning: "Kumusta", language: "English", targetLanguage: "Tagalog", category: "Greetings", createdAt: Date.now() - 300000 },
-  { id: uuidv4(), word: "Thank you", meaning: "Salamat", language: "English", targetLanguage: "Tagalog", category: "Common Phrases", createdAt: Date.now() - 280000 },
   { id: uuidv4(), word: "Good morning", meaning: "Magandang umaga", language: "English", targetLanguage: "Tagalog", category: "Greetings", createdAt: Date.now() - 260000 },
+  { id: uuidv4(), word: "Hello", meaning: "Kumusta", language: "English", targetLanguage: "Bisaya", category: "Greetings", createdAt: Date.now() - 200000 },
+  { id: uuidv4(), word: "Good morning", meaning: "Maayong buntag", language: "English", targetLanguage: "Bisaya", category: "Greetings", createdAt: Date.now() - 160000 },
+  { id: uuidv4(), word: "Hello", meaning: "Kumusta", language: "English", targetLanguage: "Waray-Waray", category: "Greetings", createdAt: Date.now() - 100000 },
+  { id: uuidv4(), word: "Good morning", meaning: "Maupay nga aga", language: "English", targetLanguage: "Waray-Waray", category: "Greetings", createdAt: Date.now() - 60000 },
+  
+  // Common Phrases
+  { id: uuidv4(), word: "Thank you", meaning: "Salamat", language: "English", targetLanguage: "Tagalog", category: "Common Phrases", createdAt: Date.now() - 280000 },
   { id: uuidv4(), word: "Yes", meaning: "Oo", language: "English", targetLanguage: "Tagalog", category: "Common Phrases", createdAt: Date.now() - 240000 },
   { id: uuidv4(), word: "No", meaning: "Hindi", language: "English", targetLanguage: "Tagalog", category: "Common Phrases", createdAt: Date.now() - 220000 },
-  { id: uuidv4(), word: "Eat", meaning: "Kain", language: "English", targetLanguage: "Tagalog", category: "Food", createdAt: Date.now() - 210000 },
-  { id: uuidv4(), word: "Water", meaning: "Tubig", language: "English", targetLanguage: "Tagalog", category: "Food", createdAt: Date.now() - 205000 },
+  { id: uuidv4(), word: "Please", meaning: "Pakiusap", language: "English", targetLanguage: "Tagalog", category: "Common Phrases", createdAt: Date.now() - 215000 },
+  { id: uuidv4(), word: "Excuse me", meaning: "Paumanhin", language: "English", targetLanguage: "Tagalog", category: "Common Phrases", createdAt: Date.now() - 210000 },
 
-
-  { id: uuidv4(), word: "Hello", meaning: "Kumusta", language: "English", targetLanguage: "Bisaya", category: "Greetings", createdAt: Date.now() - 200000 },
   { id: uuidv4(), word: "Thank you", meaning: "Salamat", language: "English", targetLanguage: "Bisaya", category: "Common Phrases", createdAt: Date.now() - 180000 },
-  { id: uuidv4(), word: "Good morning", meaning: "Maayong buntag", language: "English", targetLanguage: "Bisaya", category: "Greetings", createdAt: Date.now() - 160000 },
   { id: uuidv4(), word: "Yes", meaning: "Oo", language: "English", targetLanguage: "Bisaya", category: "Common Phrases", createdAt: Date.now() - 140000 },
   { id: uuidv4(), word: "No", meaning: "Dili", language: "English", targetLanguage: "Bisaya", category: "Common Phrases", createdAt: Date.now() - 120000 },
-  { id: uuidv4(), word: "Eat", meaning: "Kaon", language: "English", targetLanguage: "Bisaya", category: "Food", createdAt: Date.now() - 110000 },
-  { id: uuidv4(), word: "Water", meaning: "Tubig", language: "English", targetLanguage: "Bisaya", category: "Food", createdAt: Date.now() - 105000 },
+  { id: uuidv4(), word: "Please", meaning: "Palihug", language: "English", targetLanguage: "Bisaya", category: "Common Phrases", createdAt: Date.now() - 115000 },
+  { id: uuidv4(), word: "Excuse me", meaning: "Pasayloa ko", language: "English", targetLanguage: "Bisaya", category: "Common Phrases", createdAt: Date.now() - 110000 },
 
-  { id: uuidv4(), word: "Hello", meaning: "Kumusta", language: "English", targetLanguage: "Waray-Waray", category: "Greetings", createdAt: Date.now() - 100000 },
   { id: uuidv4(), word: "Thank you", meaning: "Salamat", language: "English", targetLanguage: "Waray-Waray", category: "Common Phrases", createdAt: Date.now() - 80000 },
-  { id: uuidv4(), word: "Good morning", meaning: "Maupay nga aga", language: "English", targetLanguage: "Waray-Waray", category: "Greetings", createdAt: Date.now() - 60000 },
   { id: uuidv4(), word: "Yes", meaning: "Oo", language: "English", targetLanguage: "Waray-Waray", category: "Common Phrases", createdAt: Date.now() - 40000 },
   { id: uuidv4(), word: "No", meaning: "Dire", language: "English", targetLanguage: "Waray-Waray", category: "Common Phrases", createdAt: Date.now() - 20000 },
+  { id: uuidv4(), word: "Please", meaning: "Palihog", language: "English", targetLanguage: "Waray-Waray", category: "Common Phrases", createdAt: Date.now() - 15000 },
+  { id: uuidv4(), word: "Excuse me", meaning: "Pasayloa gad", language: "English", targetLanguage: "Waray-Waray", category: "Common Phrases", createdAt: Date.now() - 10000 },
+
+  // Food
+  { id: uuidv4(), word: "Eat", meaning: "Kain", language: "English", targetLanguage: "Tagalog", category: "Food", createdAt: Date.now() - 210000 },
+  { id: uuidv4(), word: "Water", meaning: "Tubig", language: "English", targetLanguage: "Tagalog", category: "Food", createdAt: Date.now() - 205000 },
+  { id: uuidv4(), word: "Rice", meaning: "Kanin", language: "English", targetLanguage: "Tagalog", category: "Food", createdAt: Date.now() - 202000 },
+  { id: uuidv4(), word: "Eat", meaning: "Kaon", language: "English", targetLanguage: "Bisaya", category: "Food", createdAt: Date.now() - 110000 },
+  { id: uuidv4(), word: "Water", meaning: "Tubig", language: "English", targetLanguage: "Bisaya", category: "Food", createdAt: Date.now() - 105000 },
+  { id: uuidv4(), word: "Rice", meaning: "Bugas/Kanon", language: "English", targetLanguage: "Bisaya", category: "Food", createdAt: Date.now() - 102000 },
   { id: uuidv4(), word: "Eat", meaning: "Kaon", language: "English", targetLanguage: "Waray-Waray", category: "Food", createdAt: Date.now() - 10000 },
   { id: uuidv4(), word: "Water", meaning: "Tubig", language: "English", targetLanguage: "Waray-Waray", category: "Food", createdAt: Date.now() - 5000 },
+  { id: uuidv4(), word: "Rice", meaning: "Kan-on/Bugas", language: "English", targetLanguage: "Waray-Waray", category: "Food", createdAt: Date.now() - 2000 },
+
+  // Family
+  { id: uuidv4(), word: "Mother", meaning: "Nanay/Ina", language: "English", targetLanguage: "Tagalog", category: "Family", createdAt: Date.now() - 10000 },
+  { id: uuidv4(), word: "Father", meaning: "Tatay/Ama", language: "English", targetLanguage: "Tagalog", category: "Family", createdAt: Date.now() - 9000 },
+  { id: uuidv4(), word: "Sibling", meaning: "Kapatid", language: "English", targetLanguage: "Tagalog", category: "Family", createdAt: Date.now() - 8000 },
+  { id: uuidv4(), word: "Mother", meaning: "Nanay/Inahan", language: "English", targetLanguage: "Bisaya", category: "Family", createdAt: Date.now() - 7000 },
+  { id: uuidv4(), word: "Father", meaning: "Tatay/Amahan", language: "English", targetLanguage: "Bisaya", category: "Family", createdAt: Date.now() - 6000 },
+  { id: uuidv4(), word: "Sibling", meaning: "Igsoon", language: "English", targetLanguage: "Bisaya", category: "Family", createdAt: Date.now() - 5000 },
+  { id: uuidv4(), word: "Mother", meaning: "Nanay/Iroy", language: "English", targetLanguage: "Waray-Waray", category: "Family", createdAt: Date.now() - 4000 },
+  { id: uuidv4(), word: "Father", meaning: "Tatay/Amay", language: "English", targetLanguage: "Waray-Waray", category: "Family", createdAt: Date.now() - 3000 },
+  { id: uuidv4(), word: "Sibling", meaning: "Bugto", language: "English", targetLanguage: "Waray-Waray", category: "Family", createdAt: Date.now() - 2000 },
 ];
 
 

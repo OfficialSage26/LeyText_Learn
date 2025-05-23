@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, use } from 'react'; 
+import React, { useState, useEffect, use } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { useGlobalAppContext } from '@/hooks/useGlobalAppContext';
 import { generateExampleSentences } from '@/ai/flows/generate-example-sentences';
@@ -13,15 +13,40 @@ import type { WordEntry, Language } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { SUPPORTED_LANGUAGES } from '@/types';
 
-// Placeholder for unit data - in a real app, this might come from a CMS or a more complex data structure
-const unitsData: { [key: string]: { title: string; description: string; } } = {
-  unit1: { title: "Unit 1: Foundations", description: "Learning basic greetings and phrases." },
-  unit2: { title: "Unit 2: Everyday Greetings & Introductions", description: "Master common greetings, introductions, and essential polite phrases." },
-  unit3: { title: "Unit 3: People & Family", description: "Talk about yourself, family members, and describe people." },
-  unit4: { title: "Unit 4: Basic Verbs & Actions", description: "Learn essential verbs and how to form simple sentences about actions." },
+// Overall unit information (could be expanded or moved to a central place)
+const unitsData: { [key: string]: { title: string; description: string; icon: React.ElementType } } = {
+  unit1: { title: "Unit 1: Foundations", description: "Learning basic greetings and phrases.", icon: BookOpenText },
+  unit2: { title: "Unit 2: Everyday Greetings & Introductions", description: "Master common greetings, introductions, and essential polite phrases.", icon: BookOpenText },
+  unit3: { title: "Unit 3: People & Family", description: "Talk about yourself, family members, and describe people.", icon: BookOpenText },
+  unit4: { title: "Unit 4: Basic Verbs & Actions", description: "Learn essential verbs and how to form simple sentences about actions.", icon: BookOpenText },
 };
 
-interface GreetingDisplay extends WordEntry {
+interface UnitLessonConfig {
+  lessonTitle: string;
+  categories: string[]; // Now an array of categories
+  lessonDescription: string;
+}
+
+// Specific lesson content configuration for each unit
+const unitLessonData: { [key: string]: UnitLessonConfig } = {
+  unit1: { 
+    lessonTitle: "Lesson 1: Basic Greetings", 
+    categories: ["Greetings"],
+    lessonDescription: "Learn some common greetings in {LANGUAGE}. Click the button to see AI-generated example sentences."
+  },
+  unit2: { 
+    lessonTitle: "Lesson 1: Common Phrases", 
+    categories: ["Common Phrases"],
+    lessonDescription: "Practice everyday phrases in {LANGUAGE}. See how they are used in context."
+  },
+  unit3: { 
+    lessonTitle: "Lesson 1: Family Members", 
+    categories: ["Family"],
+    lessonDescription: "Learn vocabulary related to family members in {LANGUAGE}."
+  },
+};
+
+interface LessonWordDisplay extends WordEntry {
   aiExamples?: string[];
   isLoadingExamples?: boolean;
 }
@@ -33,91 +58,96 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
   const { targetLanguage: learningLanguage, sourceLanguage: globalSourceLanguage, words: allWords } = useGlobalAppContext();
   const { toast } = useToast();
 
-  const [greetings, setGreetings] = useState<GreetingDisplay[]>([]);
+  const [lessonWords, setLessonWords] = useState<LessonWordDisplay[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const unitInfo = unitsData[unitId] || { title: `Unit ${unitId.replace('unit','')}`, description: "Content for this unit is under development." };
+  const unitInfo = unitsData[unitId] || { title: `Unit ${unitId.replace('unit','')}`, description: "Content for this unit is under development.", icon: BookOpenText };
+  const currentLessonConfig = unitLessonData[unitId];
 
   useEffect(() => {
-    if (unitId === 'unit1' && learningLanguage) {
-      let relevantDisplayGreetings: GreetingDisplay[] = [];
+    setIsLoading(true);
+    if (currentLessonConfig && learningLanguage && allWords) {
+      let relevantLessonWords: LessonWordDisplay[] = [];
+      const categoriesToFilter = currentLessonConfig.categories.map(c => c.toLowerCase());
 
       if (learningLanguage === 'English') {
+        // Determine a non-English language to show as the 'meaning'
         const meaningLanguage = (globalSourceLanguage !== 'English' ? globalSourceLanguage : SUPPORTED_LANGUAGES.find(l => l !== 'English')) || 'Tagalog' as Language;
         
-        relevantDisplayGreetings = allWords
+        relevantLessonWords = allWords
           .filter(w =>
             w.language === 'English' && 
             w.targetLanguage === meaningLanguage && 
-            w.category?.toLowerCase() === 'greetings'
+            w.category && categoriesToFilter.includes(w.category.toLowerCase())
           )
           .map(w_entry => ({
             ...w_entry, 
-            word: w_entry.word, 
-            meaning: w_entry.meaning, 
-            language: 'English', 
-            targetLanguage: meaningLanguage, 
-            aiExamples: [],
+            word: w_entry.word, // English word
+            meaning: w_entry.meaning, // Meaning in meaningLanguage
+            language: 'English', // Word is in English
+            targetLanguage: meaningLanguage, // Meaning is in meaningLanguage
+            aiExamples: w_entry.aiSentences || [],
             isLoadingExamples: false,
           }));
-      } else {
-        relevantDisplayGreetings = allWords
+      } else { // Learning a non-English language
+        relevantLessonWords = allWords
           .filter(w =>
-            w.language === 'English' && 
+            w.language === 'English' && // Assuming English is the base for initialWords meanings
             w.targetLanguage === learningLanguage && 
-            w.category?.toLowerCase() === 'greetings'
+            w.category && categoriesToFilter.includes(w.category.toLowerCase())
           )
           .map(w_entry => ({
             ...w_entry, 
-            word: w_entry.meaning, 
-            meaning: w_entry.word, 
-            language: learningLanguage, 
-            targetLanguage: 'English', 
-            aiExamples: [],
+            word: w_entry.meaning, // Word in the learning language
+            meaning: w_entry.word, // Meaning in English
+            language: learningLanguage, // Word is in learningLanguage
+            targetLanguage: 'English', // Meaning is in English
+            aiExamples: w_entry.aiSentences || [],
             isLoadingExamples: false,
           }));
       }
-      setGreetings(relevantDisplayGreetings.slice(0, 5)); 
+      setLessonWords(relevantLessonWords.slice(0, 10)); // Show up to 10 words per lesson
     } else {
-      // Clear greetings if not unit1 or no learning language
-      setGreetings([]);
+      setLessonWords([]);
     }
-  }, [unitId, learningLanguage, globalSourceLanguage, allWords]);
+    setIsLoading(false);
+  }, [unitId, learningLanguage, globalSourceLanguage, allWords, currentLessonConfig]);
 
-  const handleGetAIExamples = async (greetingIndex: number) => {
-    const specificGreeting = greetings[greetingIndex];
-    if (!specificGreeting) return;
+  const handleGetAIExamples = async (wordIndex: number) => {
+    const specificWord = lessonWords[wordIndex];
+    if (!specificWord) return;
 
-    setGreetings(prev => prev.map((g, idx) => idx === greetingIndex ? { ...g, isLoadingExamples: true } : g));
+    setLessonWords(prev => prev.map((g, idx) => idx === wordIndex ? { ...g, isLoadingExamples: true } : g));
 
     try {
       const result = await generateExampleSentences({
-        wordOrPhrase: specificGreeting.word, 
-        language: specificGreeting.language, 
+        wordOrPhrase: specificWord.word, 
+        language: specificWord.language, 
       });
-      setGreetings(prev => prev.map((g, idx) => idx === greetingIndex ? { ...g, aiExamples: result.sentences, isLoadingExamples: false } : g));
-      toast({ title: "AI Examples Generated", description: `Examples for "${specificGreeting.word}" loaded.` });
+      setLessonWords(prev => prev.map((g, idx) => idx === wordIndex ? { ...g, aiExamples: result.sentences, isLoadingExamples: false } : g));
+      toast({ title: "AI Examples Generated", description: `Examples for "${specificWord.word}" loaded.` });
     } catch (error) {
       console.error("Error generating AI examples:", error);
       toast({ title: "Error", description: "Could not load AI examples.", variant: "destructive" });
-      setGreetings(prev => prev.map((g, idx) => idx === greetingIndex ? { ...g, isLoadingExamples: false } : g));
+      setLessonWords(prev => prev.map((g, idx) => idx === wordIndex ? { ...g, isLoadingExamples: false } : g));
     }
   };
   
-  if (unitId !== 'unit1') {
+  if (!currentLessonConfig) {
     return (
       <AppLayout>
         <div className="text-center py-10">
            <Card className="max-w-md mx-auto shadow-lg">
             <CardHeader>
               <div className="flex items-center justify-center gap-2 mb-2">
-                <Info className="w-12 h-12 text-primary" />
+                <unitInfo.icon className="w-12 h-12 text-primary" />
                 <CardTitle className="text-2xl sm:text-3xl font-bold">{unitInfo.title}</CardTitle>
               </div>
               <CardDescription className="text-lg">Learning {learningLanguage}</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground mb-8">
-                Detailed lessons and activities for this unit are currently under development. Please check back soon!
+                Detailed lessons and activities for this unit are currently under development or this unit ID is not configured. Please check back soon!
               </p>
               <Button asChild variant="outline">
                 <Link href="/learn/path">
@@ -131,13 +161,15 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
     );
   }
 
+  const lessonDescription = currentLessonConfig.lessonDescription.replace('{LANGUAGE}', learningLanguage);
+
   return (
     <AppLayout>
       <div className="space-y-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div className="flex-grow">
             <div className="flex items-start sm:items-center gap-3 mb-2">
-              <BookOpenText className="w-10 h-10 text-primary flex-shrink-0 mt-1 sm:mt-0" />
+              <unitInfo.icon className="w-10 h-10 text-primary flex-shrink-0 mt-1 sm:mt-0" />
               <CardTitle className="text-2xl sm:text-3xl lg:text-4xl font-bold">{unitInfo.title} - Learning {learningLanguage}</CardTitle>
             </div>
             <CardDescription className="text-base sm:text-lg">{unitInfo.description}</CardDescription>
@@ -151,49 +183,55 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-xl sm:text-2xl">Lesson 1: Basic Greetings</CardTitle>
-            <CardDescription>Learn some common greetings in {learningLanguage}. Click the button to see AI-generated example sentences.</CardDescription>
+            <CardTitle className="text-xl sm:text-2xl">{currentLessonConfig.lessonTitle}</CardTitle>
+            <CardDescription>{lessonDescription}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {greetings.length === 0 && (
+            {isLoading ? (
+              <div className="flex justify-center items-center py-10">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="ml-2 text-muted-foreground">Loading lesson content...</p>
+              </div>
+            ) : lessonWords.length === 0 ? (
               <p className="text-muted-foreground">
-                No greetings found for {learningLanguage} in the initial word set for this unit. 
-                Consider adding some "Greetings" to your Word List for English words translated to {learningLanguage === 'English' ? (globalSourceLanguage !== 'English' ? globalSourceLanguage : 'Tagalog') : learningLanguage}.
+                No vocabulary found for {learningLanguage} in the category "{currentLessonConfig.categories.join(', ')}" for this lesson. 
+                Consider adding relevant words to your Word List.
               </p>
+            ) : (
+              lessonWords.map((wordItem, index) => (
+                <Card key={wordItem.id} className="p-4 shadow-sm">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <div>
+                      <h3 className="text-xl font-semibold text-primary">{wordItem.word}</h3>
+                      <p className="text-sm text-muted-foreground">({wordItem.meaning} - in {wordItem.targetLanguage})</p>
+                    </div>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => handleGetAIExamples(index)}
+                      disabled={wordItem.isLoadingExamples}
+                      className="mt-2 sm:mt-0 w-full sm:w-auto"
+                      aria-label={`Get AI example sentences for ${wordItem.word}`}
+                    >
+                      {wordItem.isLoadingExamples ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Sparkles className="mr-2 h-4 w-4" />
+                      )}
+                      Get AI Examples
+                    </Button>
+                  </div>
+                  {wordItem.aiExamples && wordItem.aiExamples.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-dashed" aria-live="polite">
+                      <h4 className="text-sm font-medium mb-1">Example Sentences (in {wordItem.language}):</h4>
+                      <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                        {wordItem.aiExamples.map((ex, i) => <li key={i}><em>{ex}</em></li>)}
+                      </ul>
+                    </div>
+                  )}
+                </Card>
+              ))
             )}
-            {greetings.map((greeting, index) => (
-              <Card key={greeting.id} className="p-4 shadow-sm">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                  <div>
-                    <h3 className="text-xl font-semibold text-primary">{greeting.word}</h3>
-                    <p className="text-sm text-muted-foreground">({greeting.meaning} - in {greeting.targetLanguage})</p>
-                  </div>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    onClick={() => handleGetAIExamples(index)}
-                    disabled={greeting.isLoadingExamples}
-                    className="mt-2 sm:mt-0 w-full sm:w-auto"
-                    aria-label={`Get AI example sentences for ${greeting.word}`}
-                  >
-                    {greeting.isLoadingExamples ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Sparkles className="mr-2 h-4 w-4" />
-                    )}
-                    Get AI Examples
-                  </Button>
-                </div>
-                {greeting.aiExamples && greeting.aiExamples.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-dashed" aria-live="polite">
-                    <h4 className="text-sm font-medium mb-1">Example Sentences (in {greeting.language}):</h4>
-                    <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                      {greeting.aiExamples.map((ex, i) => <li key={i}><em>{ex}</em></li>)}
-                    </ul>
-                  </div>
-                )}
-              </Card>
-            ))}
           </CardContent>
         </Card>
 
@@ -209,3 +247,5 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
     </AppLayout>
   );
 }
+
+    
