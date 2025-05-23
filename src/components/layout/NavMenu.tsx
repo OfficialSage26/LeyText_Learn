@@ -5,11 +5,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Layers, HelpCircle, Languages, GraduationCap, BookMarked } from 'lucide-react';
+import { BookOpen, Layers, HelpCircle, Languages, GraduationCap, BookMarked, Library } from 'lucide-react';
 
 const navItems = [
   { href: '/learn/select-language', label: 'Learn', icon: GraduationCap },
-  { href: '/dictionary', label: 'Dictionary', icon: BookMarked },
+  { href: '/dictionary', label: 'Dictionary (Bilingual)', icon: BookMarked },
+  { href: '/monolingual-dictionary', label: 'Mono Dictionary', icon: Library },
   { href: '/word-lists', label: 'Word Lists', icon: BookOpen },
   { href: '/flashcards', label: 'Flashcards', icon: Layers },
   { href: '/quizzes', label: 'Quizzes', icon: HelpCircle },
@@ -28,7 +29,10 @@ export default function NavMenu({ isMobile = false }: NavMenuProps) {
       return pathname === href || pathname.startsWith('/learn');
     }
     if (href === '/dictionary') {
-      return pathname === href || pathname.startsWith('/dictionary');
+      return pathname === href; // Exact match for bilingual dictionary
+    }
+    if (href === '/monolingual-dictionary') {
+      return pathname === href || pathname.startsWith('/monolingual-dictionary');
     }
     return pathname === href || (pathname.startsWith(href) && href !== '/');
   };
