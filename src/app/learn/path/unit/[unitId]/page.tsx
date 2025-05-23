@@ -7,7 +7,7 @@ import { useGlobalAppContext } from '@/hooks/useGlobalAppContext';
 import { generateExampleSentences } from '@/ai/flows/generate-example-sentences';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Sparkles, Loader2, ChevronRight, BookOpenText, Info, Briefcase, Palette, CalendarDays, Hash } from 'lucide-react';
+import { ArrowLeft, Sparkles, Loader2, ChevronRight, BookOpenText, Info, Users, Briefcase, Palette, CalendarDays, Hash } from 'lucide-react';
 import Link from 'next/link';
 import type { WordEntry, Language } from '@/types';
 import { useToast } from '@/hooks/use-toast';
@@ -17,7 +17,7 @@ import { SUPPORTED_LANGUAGES } from '@/types';
 const unitsData: { [key: string]: { title: string; description: string; icon: React.ElementType } } = {
   unit1: { title: "Unit 1: Foundations", description: "Learning basic greetings, phrases, numbers, colors, and days.", icon: BookOpenText },
   unit2: { title: "Unit 2: Everyday Greetings & Introductions", description: "Master common greetings, introductions, and essential polite phrases.", icon: BookOpenText },
-  unit3: { title: "Unit 3: People & Family", description: "Talk about yourself, family members, and describe people.", icon: BookOpenText }, // Consider Users icon from lucide
+  unit3: { title: "Unit 3: People & Family", description: "Talk about yourself, family members, and describe people.", icon: Users },
   unit4: { title: "Unit 4: Basic Verbs & Actions", description: "Learn essential verbs and how to form simple sentences about actions.", icon: Briefcase },
 };
 
@@ -29,18 +29,18 @@ interface UnitLessonConfig {
 
 // Specific lesson content configuration for each unit
 const unitLessonData: { [key: string]: UnitLessonConfig } = {
-  unit1: { 
-    lessonTitle: "Lessons 1-5: Foundational Vocabulary", 
+  unit1: {
+    lessonTitle: "Lessons 1-5: Foundational Vocabulary",
     categories: ["Greetings", "Common Phrases", "Numbers", "Colors", "Days"],
     lessonDescription: "Learn common greetings, phrases, numbers, colors, and days of the week in {LANGUAGE}. Click the button to see AI-generated example sentences."
   },
-  unit2: { 
-    lessonTitle: "Lesson 1: Common Phrases & Introductions", 
+  unit2: {
+    lessonTitle: "Lesson 1: Common Phrases & Introductions",
     categories: ["Common Phrases", "Greetings"], // Could also introduce more specific "Introductions" category later
     lessonDescription: "Practice everyday phrases and introductions in {LANGUAGE}. See how they are used in context."
   },
-  unit3: { 
-    lessonTitle: "Lesson 1: Family Members", 
+  unit3: {
+    lessonTitle: "Lesson 1: Family Members",
     categories: ["Family"],
     lessonDescription: "Learn vocabulary related to family members in {LANGUAGE}."
   },
@@ -76,7 +76,6 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
       const categoriesToFilter = currentLessonConfig.categories.map(c => c.toLowerCase());
 
       if (learningLanguage === 'English') {
-        // Determine a non-English language to show as the 'meaning'
         const meaningLanguage = (globalSourceLanguage !== 'English' ? globalSourceLanguage : SUPPORTED_LANGUAGES.find(l => l !== 'English')) || 'Tagalog' as Language;
         
         relevantLessonWords = allWords
@@ -86,32 +85,32 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
             w.category && categoriesToFilter.includes(w.category.toLowerCase())
           )
           .map(w_entry => ({
-            ...w_entry, 
-            word: w_entry.word, // English word
-            meaning: w_entry.meaning, // Meaning in meaningLanguage
-            language: 'English', // Word is in English
-            targetLanguage: meaningLanguage, // Meaning is in meaningLanguage
+            ...w_entry,
+            word: w_entry.word, 
+            meaning: w_entry.meaning, 
+            language: 'English', 
+            targetLanguage: meaningLanguage, 
             aiExamples: w_entry.aiSentences || [],
             isLoadingExamples: false,
           }));
-      } else { // Learning a non-English language
+      } else { 
         relevantLessonWords = allWords
           .filter(w =>
-            w.language === 'English' && // Assuming English is the base for initialWords meanings
+            w.language === 'English' && 
             w.targetLanguage === learningLanguage && 
             w.category && categoriesToFilter.includes(w.category.toLowerCase())
           )
           .map(w_entry => ({
-            ...w_entry, 
-            word: w_entry.meaning, // Word in the learning language
-            meaning: w_entry.word, // Meaning in English
-            language: learningLanguage, // Word is in learningLanguage
-            targetLanguage: 'English', // Meaning is in English
+            ...w_entry,
+            word: w_entry.meaning, 
+            meaning: w_entry.word, 
+            language: learningLanguage, 
+            targetLanguage: 'English', 
             aiExamples: w_entry.aiSentences || [],
             isLoadingExamples: false,
           }));
       }
-      setLessonWords(relevantLessonWords.slice(0, 25)); // Show up to 25 words for combined categories
+      setLessonWords(relevantLessonWords.slice(0, 25)); 
     } else {
       setLessonWords([]);
     }
@@ -126,8 +125,8 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
 
     try {
       const result = await generateExampleSentences({
-        wordOrPhrase: specificWord.word, 
-        language: specificWord.language, 
+        wordOrPhrase: specificWord.word,
+        language: specificWord.language,
       });
       setLessonWords(prev => prev.map((g, idx) => idx === wordIndex ? { ...g, aiExamples: result.sentences, isLoadingExamples: false } : g));
       toast({ title: "AI Examples Generated", description: `Examples for "${specificWord.word}" loaded.` });
@@ -183,7 +182,7 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
       case 'numbers': return <Hash className="mr-2 h-5 w-5 text-primary" />;
       case 'colors': return <Palette className="mr-2 h-5 w-5 text-primary" />;
       case 'days': return <CalendarDays className="mr-2 h-5 w-5 text-primary" />;
-      case 'family': return <Users className="mr-2 h-5 w-5 text-primary" />; // Assuming Users icon for family
+      case 'family': return <Users className="mr-2 h-5 w-5 text-primary" />; 
       case 'verbs': return <Briefcase className="mr-2 h-5 w-5 text-primary" />;
       default: return <Info className="mr-2 h-5 w-5 text-primary" />;
     }
@@ -223,7 +222,7 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
                <div className="text-center py-6">
                 <Info className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
                 <p className="text-muted-foreground">
-                  No vocabulary found for {learningLanguage} in the categories: "{currentLessonConfig.categories.join(', ')}" for this lesson. 
+                  No vocabulary found for {learningLanguage} in the categories: "{currentLessonConfig.categories.join(', ')}" for this lesson.
                   Consider adding relevant words to your Word List.
                 </p>
               </div>
@@ -241,9 +240,9 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
                           <h4 className="text-xl font-semibold text-primary">{wordItem.word}</h4>
                           <p className="text-sm text-muted-foreground">({wordItem.meaning} - in {wordItem.targetLanguage})</p>
                         </div>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
+                        <Button
+                          size="sm"
+                          variant="outline"
                           onClick={() => handleGetAIExamples(lessonWords.findIndex(lw => lw.id === wordItem.id))}
                           disabled={wordItem.isLoadingExamples}
                           className="mt-2 sm:mt-0 w-full sm:w-auto"
@@ -286,5 +285,3 @@ export default function UnitPage({ params: paramsPromise }: { params: { unitId: 
     </AppLayout>
   );
 }
-
-    
