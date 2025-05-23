@@ -5,10 +5,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Layers, HelpCircle, Languages, GraduationCap } from 'lucide-react';
+import { BookOpen, Layers, HelpCircle, Languages, GraduationCap, BookMarked } from 'lucide-react';
 
 const navItems = [
-  { href: '/learn/select-language', label: 'Learn', icon: GraduationCap }, // Updated Link
+  { href: '/learn/select-language', label: 'Learn', icon: GraduationCap },
+  { href: '/dictionary', label: 'Dictionary', icon: BookMarked },
   { href: '/word-lists', label: 'Word Lists', icon: BookOpen },
   { href: '/flashcards', label: 'Flashcards', icon: Layers },
   { href: '/quizzes', label: 'Quizzes', icon: HelpCircle },
@@ -24,10 +25,11 @@ export default function NavMenu({ isMobile = false }: NavMenuProps) {
 
   const isActive = (href: string) => {
     if (href === '/learn/select-language') {
-      // Highlight "Learn" if on /learn/select-language or any page under /learn/*
       return pathname === href || pathname.startsWith('/learn');
     }
-    // For other top-level links, exact match or startsWith is usually fine.
+    if (href === '/dictionary') {
+      return pathname === href || pathname.startsWith('/dictionary');
+    }
     return pathname === href || (pathname.startsWith(href) && href !== '/');
   };
 
@@ -35,20 +37,20 @@ export default function NavMenu({ isMobile = false }: NavMenuProps) {
 
   if (isMobile) {
     return (
-      <nav className="flex flex-col space-y-2 p-4"> {/* Added padding for mobile */}
+      <nav className="flex flex-col space-y-2 p-4">
         {navItems.map((item) => (
           <Button
             key={item.href}
             variant={isActive(item.href) ? "secondary" : "ghost"}
             asChild
-            className="justify-start w-full text-left" /* Ensure full width and left alignment */
+            className="justify-start w-full text-left"
           >
             <Link 
               href={item.href} 
               className={navLinkClass}
               aria-current={isActive(item.href) ? "page" : undefined}
             >
-              <item.icon className="h-5 w-5" /> {/* Slightly larger icons for mobile */}
+              <item.icon className="h-5 w-5" />
               <span>{item.label}</span>
             </Link>
           </Button>
@@ -58,7 +60,7 @@ export default function NavMenu({ isMobile = false }: NavMenuProps) {
   }
 
   return (
-    <nav className="flex items-center space-x-1 lg:space-x-2"> {/* Adjusted spacing for desktop */}
+    <nav className="flex items-center space-x-1 lg:space-x-2">
       {navItems.map((item) => (
         <Button
           key={item.href}
@@ -68,7 +70,7 @@ export default function NavMenu({ isMobile = false }: NavMenuProps) {
         >
           <Link 
             href={item.href} 
-            className={cn(navLinkClass, "px-3 py-2")} /* Added padding for desktop */
+            className={cn(navLinkClass, "px-3 py-2")}
             aria-current={isActive(item.href) ? "page" : undefined}
           >
             <item.icon className="mr-2 h-4 w-4" />
