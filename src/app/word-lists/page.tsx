@@ -60,6 +60,8 @@ export default function WordListsPage() {
   const { toast } = useToast();
   const { mounted } = useMounted();
 
+  const [filteredWords, setFilteredWords] = useState<WordEntry[] | null>(null);
+
   const form = useForm<WordFormData>({
     resolver: zodResolver(wordSchema),
     defaultValues: {
@@ -74,15 +76,6 @@ export default function WordListsPage() {
   });
 
   useEffect(() => {
-    if (mounted) {
-      // Force reset filters on first client-side render after mount
-      // to ensure consistency with server-rendered state if filters were somehow persisted.
-      setSearchTerm('');
-      setSelectedCategory('');
-    }
-  }, [mounted]);
-
-  React.useEffect(() => {
     if (isFormOpen) {
       form.reset(editingWord ? {
         word: editingWord.word,
@@ -103,6 +96,25 @@ export default function WordListsPage() {
       });
     }
   }, [isFormOpen, editingWord, form, sourceLanguage, targetLanguage]);
+
+  useEffect(() => {
+    if (mounted) {
+      const newFilteredWords = words
+        .filter(word => {
+          const searchLower = searchTerm.toLowerCase();
+          return (
+            word.word.toLowerCase().includes(searchLower) ||
+            word.meaning.toLowerCase().includes(searchLower) ||
+            word.category?.toLowerCase().includes(searchLower)
+          );
+        })
+        .filter(word => selectedCategory ? word.category === selectedCategory : true)
+        .sort((a,b) => b.createdAt - a.createdAt);
+      setFilteredWords(newFilteredWords);
+    }
+    // No 'else' block needed; filteredWords remains null until calculation.
+  }, [words, searchTerm, selectedCategory, mounted]);
+
 
   const onSubmit = (data: WordFormData) => {
     if (editingWord) {
@@ -133,7 +145,7 @@ export default function WordListsPage() {
         toast({
           title: "AI Sentences",
           description: `No example sentences generated for "${wordEntry.word}".`,
-          variant: "destructive",
+          variant: "default", // Changed from destructive to default as it's not an error, just no results
         });
       }
     } catch (error) {
@@ -147,22 +159,7 @@ export default function WordListsPage() {
     setIsGeneratingAiSentences(false);
   };
   
-  const filteredWords = useMemo(() => {
-    if (!mounted) return []; // Don't compute until client-side and words from context are stable
-    return words
-      .filter(word => {
-        const searchLower = searchTerm.toLowerCase();
-        return (
-          word.word.toLowerCase().includes(searchLower) ||
-          word.meaning.toLowerCase().includes(searchLower) ||
-          word.category?.toLowerCase().includes(searchLower)
-        );
-      })
-      .filter(word => selectedCategory ? word.category === selectedCategory : true)
-      .sort((a,b) => b.createdAt - a.createdAt);
-  }, [words, searchTerm, selectedCategory, mounted]);
-
-  if (!mounted) {
+  if (!mounted || filteredWords === null) {
     return (
       <AppLayout>
         <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
