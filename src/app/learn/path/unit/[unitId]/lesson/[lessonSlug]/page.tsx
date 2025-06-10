@@ -13,6 +13,7 @@ import type { WordEntry, Language } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { getLessonBySlug, getUnitById } from '@/config/learningPath';
 import { SUPPORTED_LANGUAGES } from '@/types';
+import { useMounted } from '@/hooks/useMounted';
 
 interface LessonWordDisplay extends WordEntry {
   aiExamples?: string[];
@@ -29,6 +30,7 @@ export default function LessonPage({ params: paramsPromise }: { params: { unitId
     words: allWords 
   } = useGlobalAppContext();
   const { toast } = useToast();
+  const mounted = useMounted();
 
   const [lessonWords, setLessonWords] = useState<LessonWordDisplay[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,55 +39,57 @@ export default function LessonPage({ params: paramsPromise }: { params: { unitId
   const lesson = getLessonBySlug(unitId, lessonSlug);
 
   useEffect(() => {
-    setIsLoading(true);
+    if (!mounted) {
+      setIsLoading(true); // Keep loading if not mounted
+      return;
+    }
+
+    setIsLoading(true); // Set loading true at the start of processing
     if (lesson && learningLanguage && allWords) {
       let relevantLessonWords: LessonWordDisplay[] = [];
       const categoryToFilter = lesson.category.toLowerCase();
 
-      // If the user is learning English
       if (learningLanguage === 'English') {
-        // Determine the language to show as the "meaning" (non-English)
         const meaningLanguage = (globalSourceLanguage !== 'English' ? globalSourceLanguage : SUPPORTED_LANGUAGES.find(l => l !== 'English')) || 'Tagalog' as Language;
         
         relevantLessonWords = allWords
           .filter(w =>
-            w.language === 'English' && // The word itself is in English
-            w.targetLanguage === meaningLanguage && // The meaning is in the chosen non-English language
+            w.language === 'English' &&
+            w.targetLanguage === meaningLanguage &&
             w.category?.toLowerCase() === categoryToFilter
           )
           .map(w_entry => ({
             ...w_entry,
-            word: w_entry.word, // English word
-            meaning: w_entry.meaning, // Meaning in non-English
-            language: 'English', // Language of the word to be shown/spoken
-            targetLanguage: meaningLanguage, // Language of the meaning
+            word: w_entry.word,
+            meaning: w_entry.meaning,
+            language: 'English',
+            targetLanguage: meaningLanguage,
             aiExamples: w_entry.aiSentences || [],
             isLoadingExamples: false,
           }));
       } else { 
-        // If the user is learning a non-English language
         relevantLessonWords = allWords
           .filter(w =>
-            w.language === 'English' && // The original word entry is English
-            w.targetLanguage === learningLanguage && // The meaning is in the language being learned
+            w.language === 'English' &&
+            w.targetLanguage === learningLanguage &&
             w.category?.toLowerCase() === categoryToFilter
           )
           .map(w_entry => ({
             ...w_entry,
-            word: w_entry.meaning, // This is the word in the language being learned
-            meaning: w_entry.word, // This is the English meaning
-            language: learningLanguage, // Language of the word to be shown/spoken
-            targetLanguage: 'English', // Language of the meaning
+            word: w_entry.meaning,
+            meaning: w_entry.word,
+            language: learningLanguage,
+            targetLanguage: 'English',
             aiExamples: w_entry.aiSentences || [],
             isLoadingExamples: false,
           }));
       }
-      setLessonWords(relevantLessonWords.slice(0, 30)); // Increased word limit
+      setLessonWords(relevantLessonWords.slice(0, 30));
     } else {
       setLessonWords([]);
     }
     setIsLoading(false);
-  }, [unitId, lessonSlug, learningLanguage, globalSourceLanguage, allWords, lesson]);
+  }, [unitId, lessonSlug, learningLanguage, globalSourceLanguage, allWords, lesson, mounted]);
 
   const handleGetAIExamples = async (wordId: string) => {
     const wordIndex = lessonWords.findIndex(w => w.id === wordId);
@@ -138,6 +142,14 @@ export default function LessonPage({ params: paramsPromise }: { params: { unitId
   
   const LessonIcon = lesson.icon || BookOpenText;
 
+  // Define text based on mounted state to prevent hydration mismatch
+  const displayedLearningLanguage = mounted ? learningLanguage : "language";
+  const displayedMeaningLanguage = mounted 
+    ? (learningLanguage === 'English' 
+        ? ((globalSourceLanguage !== 'English' ? globalSourceLanguage : SUPPORTED_LANGUAGES.find(l => l !== 'English')) || 'Tagalog') 
+        : 'English') 
+    : "meaning language";
+
   return (
     <AppLayout>
       <div className="space-y-8">
@@ -150,7 +162,7 @@ export default function LessonPage({ params: paramsPromise }: { params: { unitId
               </CardTitle>
             </div>
             <CardDescription className="text-base sm:text-lg">
-              Learning {learningLanguage}. {lesson.description}
+              Learning {displayedLearningLanguage}. {lesson.description}
             </CardDescription>
           </div>
            <Button asChild variant="outline" className="self-start sm:self-center mt-4 sm:mt-0">
@@ -164,11 +176,11 @@ export default function LessonPage({ params: paramsPromise }: { params: { unitId
           <CardHeader>
             <CardTitle className="text-xl sm:text-2xl">Vocabulary for this Lesson</CardTitle>
             <CardDescription>
-              Words and phrases in {learningLanguage}. Meanings are shown in {learningLanguage === 'English' ? ((globalSourceLanguage !== 'English' ? globalSourceLanguage : SUPPORTED_LANGUAGES.find(l => l !== 'English')) || 'Tagalog') : 'English'}.
+              Words and phrases in {displayedLearningLanguage}. Meanings are shown in {displayedMeaningLanguage}.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {isLoading ? (
+            {(!mounted || isLoading) ? (
               <div className="flex justify-center items-center py-10">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <p className="ml-2 text-muted-foreground">Loading lesson content...</p>
@@ -177,7 +189,7 @@ export default function LessonPage({ params: paramsPromise }: { params: { unitId
                <div className="text-center py-6">
                 <Info className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
                 <p className="text-muted-foreground">
-                  No vocabulary found for {learningLanguage} in the category "{lesson.category}" for this lesson.
+                  No vocabulary found for {displayedLearningLanguage} in the category "{lesson.category}" for this lesson.
                   Consider adding relevant words to your Word List under this category.
                 </p>
               </div>
