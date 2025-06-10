@@ -5,7 +5,6 @@ import './globals.css';
 import { Providers } from './providers';
 import { cn } from '@/lib/utils';
 import React from 'react';
-// import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'; // Removed
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -20,7 +19,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'LeyText Learn',
   description: 'Learn Tagalog, English, Bisaya, and Waray-Waray with LeyText Learn!',
-  // manifest: '/manifest.json', // Removed manifest link
 };
 
 export default function RootLayout({
@@ -41,21 +39,8 @@ export default function RootLayout({
         <meta name="msapplication-TileColor" content="#3B82F6" />
         <meta name="msapplication-tap-highlight" content="no" />
         <meta name="theme-color" content="#3B82F6" />
-
-        {/* Add links for Apple touch icons if you have them */}
-        {/* <link rel="apple-touch-icon" href="/icons/touch-icon-iphone.png" /> */}
-        {/* <link rel="apple-touch-icon" sizes="152x152" href="/icons/touch-icon-ipad.png" /> */}
-        {/* <link rel="apple-touch-icon" sizes="180x180" href="/icons/touch-icon-iphone-retina.png" /> */}
-        {/* <link rel="apple-touch-icon" sizes="167x167" href="/icons/touch-icon-ipad-retina.png" /> */}
-
-        {/* Link to manifest.json (already in metadata, but good for clarity here too) */}
-        {/* <link rel="manifest" href="/manifest.json" /> */} {/* Removed manifest link */}
-        
-        {/* Example shortcut icons */}
-        {/* <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" /> */}
-        {/* <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png" /> */}
       </head>
-      <body 
+      <body
         className={cn(
           "min-h-screen bg-background font-sans antialiased",
           geistSans.variable,
@@ -65,7 +50,6 @@ export default function RootLayout({
         <Providers>
           {children}
         </Providers>
-        {/* <ServiceWorkerRegistration /> */} {/* Removed */}
       </body>
     </html>
   );
