@@ -5,7 +5,7 @@ import './globals.css';
 import { Providers } from './providers';
 import { cn } from '@/lib/utils';
 import React from 'react';
-import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
+// import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'; // Removed
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'LeyText Learn',
   description: 'Learn Tagalog, English, Bisaya, and Waray-Waray with LeyText Learn!',
-  manifest: '/manifest.json', // Link to the manifest file
+  // manifest: '/manifest.json', // Removed manifest link
 };
 
 export default function RootLayout({
@@ -49,7 +49,7 @@ export default function RootLayout({
         {/* <link rel="apple-touch-icon" sizes="167x167" href="/icons/touch-icon-ipad-retina.png" /> */}
 
         {/* Link to manifest.json (already in metadata, but good for clarity here too) */}
-        <link rel="manifest" href="/manifest.json" />
+        {/* <link rel="manifest" href="/manifest.json" /> */} {/* Removed manifest link */}
         
         {/* Example shortcut icons */}
         {/* <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" /> */}
@@ -65,7 +65,7 @@ export default function RootLayout({
         <Providers>
           {children}
         </Providers>
-        <ServiceWorkerRegistration />
+        {/* <ServiceWorkerRegistration /> */} {/* Removed */}
       </body>
     </html>
   );
