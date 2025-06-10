@@ -15,9 +15,9 @@ const learningSections = [
     description: "Follow guided lessons and track your progress through different language levels.",
     icon: Map,
     href: "/learn/path",
-    imageSrc: "https://placehold.co/600x400.png",
-    altText: "Illustration of a winding path or map representing a learning journey.",
-    dataAiHint: "map journey",
+    imageSrc: "https://img.freepik.com/premium-vector/path-icon-vector-illustration_118339-2634.jpg?w=900",
+    altText: "Illustration of a winding path representing a learning journey.",
+    dataAiHint: "path journey",
     cta: "Start Path",
   },
   {
@@ -25,9 +25,9 @@ const learningSections = [
     description: "Dive into specific themes like travel, food, or business conversations.",
     icon: BookOpen,
     href: "/learn/topics",
-    imageSrc: "https://placehold.co/600x400.png",
-    altText: "Illustration of open books or a library setting, symbolizing topic exploration.",
-    dataAiHint: "books library",
+    imageSrc: "https://ocrelationshipcenter.com/wp-content/uploads/2018/09/topic.jpg",
+    altText: "Illustration representing topic exploration.",
+    dataAiHint: "topic discussion",
     cta: "Browse Topics",
   },
   {
@@ -35,9 +35,9 @@ const learningSections = [
     description: "Test your skills with interactive exercises and real-world scenarios.",
     icon: Zap,
     href: "/learn/challenges",
-    imageSrc: "https://placehold.co/600x400.png",
-    altText: "Illustration of game elements like puzzles or achievement badges, representing practice challenges.",
-    dataAiHint: "game puzzle achievement",
+    imageSrc: "https://th.bing.com/th/id/OIP.GtGSWulfLvjfOIbQ5RAWmgHaHa?rs=1&pid=ImgDetMain",
+    altText: "Illustration of game elements representing practice challenges.",
+    dataAiHint: "challenge game",
     cta: "Take a Challenge",
   }
 ];
