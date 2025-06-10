@@ -5,13 +5,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Layers, HelpCircle, Languages, GraduationCap, BookMarked, Library } from 'lucide-react';
+import { Layers, HelpCircle, Languages, GraduationCap, Library } from 'lucide-react'; // Removed BookMarked
 
 const navItems = [
   { href: '/learn/select-language', label: 'Learn', icon: GraduationCap },
-  { href: '/dictionary', label: 'Dictionary (Bilingual)', icon: BookMarked },
+  // { href: '/dictionary', label: 'Dictionary (Bilingual)', icon: BookMarked }, // Removed Dictionary (Bilingual)
   { href: '/monolingual-dictionary', label: 'Mono Dictionary', icon: Library },
-  // { href: '/word-lists', label: 'Word Lists', icon: BookOpen }, // Removed Word Lists
   { href: '/flashcards', label: 'Flashcards', icon: Layers },
   { href: '/quizzes', label: 'Quizzes', icon: HelpCircle },
   { href: '/translate', label: 'Translate', icon: Languages },
@@ -28,9 +27,9 @@ export default function NavMenu({ isMobile = false }: NavMenuProps) {
     if (href === '/learn/select-language') {
       return pathname === href || pathname.startsWith('/learn');
     }
-    if (href === '/dictionary') {
-      return pathname === href; // Exact match for bilingual dictionary
-    }
+    // if (href === '/dictionary') { // Removed
+    //   return pathname === href; 
+    // }
     if (href === '/monolingual-dictionary') {
       return pathname === href || pathname.startsWith('/monolingual-dictionary');
     }
