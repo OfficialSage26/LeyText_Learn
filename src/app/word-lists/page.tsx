@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { useGlobalAppContext } from '@/hooks/useGlobalAppContext';
 import type { WordEntry, Language } from '@/types';
@@ -20,17 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { generateExampleSentences } from '@/ai/flows/generate-example-sentences';
 import { useToast } from "@/hooks/use-toast";
 import { SUPPORTED_LANGUAGES } from '@/types';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useMounted } from '@/hooks/useMounted';
 
 const wordSchema = z.object({
@@ -51,70 +41,66 @@ type WordFormData = z.infer<typeof wordSchema>;
 const ALL_CATEGORIES_OPTION_VALUE = "__ALL_CATEGORIES__";
 
 export default function WordListsPage() {
-  const { words, addWord, editWord, deleteWord, sourceLanguage, targetLanguage, categories, clearWords } = useGlobalAppContext();
+  const { words: allWordsFromContext, addWord, editWord, deleteWord, sourceLanguage, targetLanguage, categories, clearWords } = useGlobalAppContext();
+  const { toast } = useToast();
+  const mounted = useMounted();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [filteredWords, setFilteredWords] = useState<WordEntry[] | null>(null);
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingWord, setEditingWord] = useState<WordEntry | null>(null);
   const [isGeneratingAiSentences, setIsGeneratingAiSentences] = useState(false);
-  const { toast } = useToast();
-  const { mounted } = useMounted();
-
-  const [filteredWords, setFilteredWords] = useState<WordEntry[] | null>(null);
 
   const form = useForm<WordFormData>({
     resolver: zodResolver(wordSchema),
-    defaultValues: {
-      word: '',
-      meaning: '',
-      language: sourceLanguage,
-      targetLanguage: targetLanguage,
-      userSentence: '',
-      pronunciation: '',
-      category: '',
-    },
+    // Default values will be set in useEffect based on context and editingWord
   });
 
   useEffect(() => {
-    if (isFormOpen) {
-      form.reset(editingWord ? {
-        word: editingWord.word,
-        meaning: editingWord.meaning,
-        language: editingWord.language,
-        targetLanguage: editingWord.targetLanguage,
-        userSentence: editingWord.userSentence || '',
-        pronunciation: editingWord.pronunciation || '',
-        category: editingWord.category || '',
-      } : {
-        word: '',
-        meaning: '',
-        language: sourceLanguage,
-        targetLanguage: targetLanguage,
-        userSentence: '',
-        pronunciation: '',
-        category: '',
-      });
+    if (mounted) {
+      const newFiltered = allWordsFromContext
+        .filter(word => {
+          const searchLower = searchTerm.toLowerCase();
+          const categoryMatch = selectedCategory ? word.category?.toLowerCase() === selectedCategory.toLowerCase() : true;
+          const termMatch = searchLower === '' ||
+            word.word.toLowerCase().includes(searchLower) ||
+            word.meaning.toLowerCase().includes(searchLower) ||
+            word.category?.toLowerCase().includes(searchLower) ||
+            word.pronunciation?.toLowerCase().includes(searchLower);
+          return categoryMatch && termMatch;
+        })
+        .sort((a, b) => b.createdAt - a.createdAt);
+      setFilteredWords(newFiltered);
+    } else {
+      setFilteredWords(null); // Ensure it's null if not mounted
     }
-  }, [isFormOpen, editingWord, form, sourceLanguage, targetLanguage]);
+  }, [allWordsFromContext, searchTerm, selectedCategory, mounted]);
 
   useEffect(() => {
     if (mounted) {
-      const newFilteredWords = words
-        .filter(word => {
-          const searchLower = searchTerm.toLowerCase();
-          return (
-            word.word.toLowerCase().includes(searchLower) ||
-            word.meaning.toLowerCase().includes(searchLower) ||
-            word.category?.toLowerCase().includes(searchLower)
-          );
-        })
-        .filter(word => selectedCategory ? word.category === selectedCategory : true)
-        .sort((a,b) => b.createdAt - a.createdAt);
-      setFilteredWords(newFilteredWords);
+      if (isFormOpen) {
+        form.reset(editingWord ? {
+          word: editingWord.word,
+          meaning: editingWord.meaning,
+          language: editingWord.language,
+          targetLanguage: editingWord.targetLanguage,
+          userSentence: editingWord.userSentence || '',
+          pronunciation: editingWord.pronunciation || '',
+          category: editingWord.category || '',
+        } : {
+          word: '',
+          meaning: '',
+          language: sourceLanguage,
+          targetLanguage: targetLanguage,
+          userSentence: '',
+          pronunciation: '',
+          category: '',
+        });
+      }
     }
-    // No 'else' block needed; filteredWords remains null until calculation.
-  }, [words, searchTerm, selectedCategory, mounted]);
-
+  }, [isFormOpen, editingWord, form, sourceLanguage, targetLanguage, mounted]);
 
   const onSubmit = (data: WordFormData) => {
     if (editingWord) {
@@ -145,7 +131,6 @@ export default function WordListsPage() {
         toast({
           title: "AI Sentences",
           description: `No example sentences generated for "${wordEntry.word}".`,
-          variant: "default", // Changed from destructive to default as it's not an error, just no results
         });
       }
     } catch (error) {
@@ -188,6 +173,7 @@ export default function WordListsPage() {
                   className="pl-10"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  disabled={!mounted}
                 />
               </div>
               <Select
@@ -199,6 +185,7 @@ export default function WordListsPage() {
                     setSelectedCategory(value);
                   }
                 }}
+                disabled={!mounted}
               >
                 <SelectTrigger className="w-full sm:w-[200px]">
                   <SelectValue placeholder="All Categories" />
@@ -212,7 +199,7 @@ export default function WordListsPage() {
               </Select>
               <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) setEditingWord(null); }}>
                 <DialogTrigger asChild>
-                  <Button className="w-full sm:w-auto">
+                  <Button className="w-full sm:w-auto" disabled={!mounted}>
                     <PlusCircle className="mr-2 h-5 w-5" /> Add New Word
                   </Button>
                 </DialogTrigger>
@@ -229,12 +216,12 @@ export default function WordListsPage() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Word Language (Source)</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                              <Select onValueChange={field.onChange} value={field.value} defaultValue={sourceLanguage}>
                                 <FormControl>
                                   <SelectTrigger><SelectValue placeholder="Select language" /></SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  {SUPPORTED_LANGUAGES.map(lang => <SelectItem key={lang} value={lang}>{lang}</SelectItem>)}
+                                  {SUPPORTED_LANGUAGES.map(lang => <SelectItem key={'form-source-'+lang} value={lang}>{lang}</SelectItem>)}
                                 </SelectContent>
                               </Select>
                               <FormMessage />
@@ -247,12 +234,12 @@ export default function WordListsPage() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Meaning Language (Target)</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                              <Select onValueChange={field.onChange} value={field.value} defaultValue={targetLanguage}>
                                 <FormControl>
                                   <SelectTrigger><SelectValue placeholder="Select language" /></SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  {SUPPORTED_LANGUAGES.map(lang => <SelectItem key={lang} value={lang}>{lang}</SelectItem>)}
+                                  {SUPPORTED_LANGUAGES.map(lang => <SelectItem key={'form-target'+lang} value={lang}>{lang}</SelectItem>)}
                                 </SelectContent>
                               </Select>
                               <FormMessage />
@@ -311,8 +298,8 @@ export default function WordListsPage() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Category (Optional)</FormLabel>
-                              <FormControl><Input {...field} placeholder="e.g., Food, Travel, Common Phrases" list="wordlist-categories" /></FormControl>
-                              <datalist id="wordlist-categories">
+                              <FormControl><Input {...field} placeholder="e.g., Food, Travel" list="wordlist-categories-list" /></FormControl>
+                              <datalist id="wordlist-categories-list">
                                 {categories.map(cat => <option key={`cat-opt-${cat}`} value={cat} />)}
                               </datalist>
                               <FormMessage />
@@ -332,7 +319,7 @@ export default function WordListsPage() {
           </CardContent>
         </Card>
 
-        {filteredWords.length === 0 && !searchTerm && !selectedCategory ? (
+        {allWordsFromContext.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
               <MessageSquare className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
@@ -362,7 +349,7 @@ export default function WordListsPage() {
                         <CardTitle className="text-2xl">{word.word}</CardTitle>
                         <CardDescription>{word.language} &rarr; {word.targetLanguage}</CardDescription>
                       </div>
-                      {word.category && <span className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-full">{word.category}</span>}
+                      {word.category && <span className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-full whitespace-nowrap">{word.category}</span>}
                     </div>
                   </CardHeader>
                   <CardContent className="flex-grow space-y-3">
@@ -371,10 +358,10 @@ export default function WordListsPage() {
                     {word.userSentence && <p><strong className="font-medium">Example:</strong> <em>{word.userSentence}</em></p>}
                     
                     {word.aiSentences && word.aiSentences.length > 0 && (
-                      <div className="mt-2 pt-2 border-t">
-                        <p className="font-medium text-sm mb-1">AI Examples ({word.language}):</p>
+                      <div className="mt-2 pt-2 border-t border-dashed">
+                        <p className="font-medium text-sm mb-1 flex items-center gap-1"><Sparkles size={14} className="text-primary"/>AI Examples ({word.language}):</p>
                         <ul className="list-disc list-inside text-sm space-y-1 text-muted-foreground">
-                          {word.aiSentences.map((s, i) => <li key={i}><em>{s}</em></li>)}
+                          {word.aiSentences.map((s, i) => <li key={`ai-ex-${word.id}-${i}`}><em>{s}</em></li>)}
                         </ul>
                       </div>
                     )}
@@ -423,11 +410,11 @@ export default function WordListsPage() {
             </div>
           </ScrollArea>
         )}
-         {words.length > 0 && (
+         {allWordsFromContext.length > 0 && (
           <div className="mt-8 flex justify-end">
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm">
+                <Button variant="destructive" size="sm" disabled={!mounted}>
                   <Trash2 className="mr-2 h-4 w-4" /> Clear All Words
                 </Button>
               </AlertDialogTrigger>
@@ -440,7 +427,7 @@ export default function WordListsPage() {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={clearWords}>Yes, delete all</AlertDialogAction>
+                  <AlertDialogAction onClick={clearWords} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">Yes, delete all</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
