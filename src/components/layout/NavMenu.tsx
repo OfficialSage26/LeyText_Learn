@@ -11,7 +11,7 @@ const navItems = [
   { href: '/learn/select-language', label: 'Learn', icon: GraduationCap },
   { href: '/dictionary', label: 'Dictionary (Bilingual)', icon: BookMarked },
   { href: '/monolingual-dictionary', label: 'Mono Dictionary', icon: Library },
-  { href: '/word-lists', label: 'Word Lists', icon: BookOpen },
+  // { href: '/word-lists', label: 'Word Lists', icon: BookOpen }, // Removed Word Lists
   { href: '/flashcards', label: 'Flashcards', icon: Layers },
   { href: '/quizzes', label: 'Quizzes', icon: HelpCircle },
   { href: '/translate', label: 'Translate', icon: Languages },
