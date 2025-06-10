@@ -39,9 +39,33 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'www.difficultenglishexplained.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'th.bing.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '1.bp.blogspot.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '2.bp.blogspot.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
-  experimental: {
+ experimental: {
     allowedDevOrigins: ['https://6000-firebase-studio-1747825614744.cluster-htdgsbmflbdmov5xrjithceibm.cloudworkstations.dev'],
   },
 };

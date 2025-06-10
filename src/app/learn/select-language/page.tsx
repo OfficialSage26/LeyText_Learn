@@ -23,28 +23,28 @@ const languageOptions: LanguageOption[] = [
   {
     name: "Tagalog",
     description: "Widely spoken in the Philippines, especially in Manila and surrounding regions.",
-    imageSrc: "https://placehold.co/600x400.png",
+    imageSrc: "https://th.bing.com/th/id/OIP.-inzPbiQksYT4xOmLDlYegHaE8?rs=1&pid=ImgDetMain",
     altText: "Illustration representing Tagalog language or culture, like the Philippine flag.",
     dataAiHint: "Philippines flag"
   },
   {
     name: "English",
     description: "A global language, often used as a second language in the Philippines.",
-    imageSrc: "https://placehold.co/600x400.png",
+    imageSrc: "https://www.difficultenglishexplained.com/wp-content/uploads/2025/06/vecteezy_abc-wood-block_4733545-1024x683-1-600x400.jpg",
     altText: "Illustration representing English language, like a book and a globe.",
     dataAiHint: "book globe"
   },
   {
     name: "Bisaya",
     description: "Predominantly spoken in the Visayas region, including Cebu, Bohol, and parts of Mindanao.",
-    imageSrc: "https://placehold.co/600x400.png",
+    imageSrc: "https://1.bp.blogspot.com/-qKWeH7h45qo/Txaq1wJRVCI/AAAAAAAAABM/lvtUKwXI9io/w1200-h630-p-k-no-nu/390896_361707327176125_100000105822650_1580618_856399927_n.jpg",
     altText: "Illustration representing Bisaya language or Visayas region, like a landmark from Cebu.",
     dataAiHint: "Cebu landmark"
   },
   {
     name: "Waray-Waray",
     description: "Mainly spoken in Eastern Visayas, including Samar and Leyte islands.",
-    imageSrc: "https://placehold.co/600x400.png",
+    imageSrc: "https://2.bp.blogspot.com/-j-sQTB0yP00/WYmH-UJBq0I/AAAAAAAAADY/1FPPMUwGqSo7Y9BbsywG5Bzme_E9CPm6QCLcBGAs/w1200-h630-p-k-no-nu/121212.jpg",
     altText: "Illustration representing Waray-Waray language or Eastern Visayas, like the San Juanico Bridge.",
     dataAiHint: "Leyte bridge"
   }
